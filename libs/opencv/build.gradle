@@ -1,16 +1,18 @@
-buildscript{
-    repositories{
+apply plugin: 'android-library'
+
+buildscript {
+
+    repositories {
         mavenCentral()
     }
-    dependencies{
+    dependencies {
         classpath 'com.android.tools.build:gradle:3.0.1'
     }
 
 }
-
 android {
     compileSdkVersion 26
-    buildToolsVersion "19.1.0"
+    buildToolsVersion "26.0.2"
 
     defaultConfig{
         minSdkVersion 16
@@ -18,15 +20,13 @@ android {
         versionCode 1
         versionName "1.0"
     }
-
-    sourceSets{
-        main{
+    sourceSets {
+        main {
             manifest.srcFile 'AndroidManifest.xml'
             java.srcDirs = ['src']
             resources.srcDirs = ['src']
             res.srcDirs = ['res']
             aidl.srcDirs = ['src']
         }
-
     }
 }
