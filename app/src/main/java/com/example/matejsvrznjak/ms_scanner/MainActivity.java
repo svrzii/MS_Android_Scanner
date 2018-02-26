@@ -12,6 +12,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.i18n.phonenumbers.PhoneNumberMatch;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.googlecode.tesseract.android.TessBaseAPI;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
@@ -38,11 +40,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
+
 
     static {
         if (!OpenCVLoader.initDebug()) {
@@ -53,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    BusinessCardData businessCardData;
     TextView displayText;
 
     private TessBaseAPI mTess;
@@ -158,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void processImage(Bitmap image) {
-
+        businessCardData = new BusinessCardData();
         String resultOutput = "";
 
         String OCRresult = "";
@@ -167,48 +172,113 @@ public class MainActivity extends AppCompatActivity {
         //displayText.setText(OCRresult);
 //        displayText.setText(OCRresult);
 
-        OCRresult = OCRresult.replace("(0)", "").replace("(O)", "");
-
+        OCRresult = OCRresult.replace("(0)", "").replace("(O)", "").replace("[0)", "").replace("(0]", "").replace("[0]", "").replace("[O]", "");
+        OCRresult = OCRresult.replaceAll("[^+:.,()@/0123456789abcčćdđéefghijklmnopqrsštuvwxyzžABCČĆDĐEFGHIJKLMNOPQRSŠTUVWXYZŽ\\n]+", " ");
 
         boolean nameDone = false;
-        String[] lines = OCRresult.split("\\r?\\n");
-        for (String line : lines) {
+
+        ArrayList<String> stringList = new ArrayList<>(Arrays.asList(OCRresult.split("\\r?\\n"))); //new ArrayList is only needed if you absolutely need an ArrayList
+        ArrayList<String> stringList2 = separate(stringList, "/");
+//        ArrayList<String> stringList3 = separate(stringList2, ",");
+        ArrayList<String> allLines = separate(stringList2, ";");
+
+        for (String line : allLines) {
+            line = line.trim();
+
             if (line.toLowerCase().contains("m:") || line.toLowerCase().contains("mob") || line.toLowerCase().contains("gsm")) {
-                resultOutput += " \n MOBILE: " + line;
+                PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
+                Iterable<PhoneNumberMatch> numbers = phoneUtil.findNumbers(line, "EN");
+
+                for (PhoneNumberMatch num : numbers) {
+                    businessCardData.mobile = num.rawString();
+                    break;
+                }
+
+               // allLines.remove(line);
             } else if (line.toLowerCase().contains("t:") || line.toLowerCase().contains("tel") || line.toLowerCase().contains("stac")) {
-                resultOutput += " \n TELEPHONE: " + line;
+
+                PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
+                Iterable<PhoneNumberMatch> numbers = phoneUtil.findNumbers(line, "EN");
+
+                for (PhoneNumberMatch num : numbers) {
+                    businessCardData.telephone = num.rawString();
+                    break;
+                }
+
+//                allLines.remove(line);
             } else if (line.toLowerCase().contains("d.o.o.") || line.toLowerCase().contains("s.p.") || line.toLowerCase().contains("co.") || line.toLowerCase().contains("d.d.")) {
-                resultOutput += " \n COMPANY: " + line;
-            }
+                businessCardData.company = line;
+//                allLines.remove(line);
+            } else {
+                Matcher emailMatcher = Pattern.compile("[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+").matcher(line);
+                Matcher nameMatcher = Pattern.compile("([A-ZĆČŠŽ]{1}[A-ZĆČŠŽa-zéćčšž]{3,}[ ]+[A-ZĆČŠŽ]{1}[A-ZĆČŠŽa-zéćčšž]{3,})[ ]*?").matcher(line);
+                Matcher webMatcher = Pattern.compile("(https?:\\/\\/(?:www\\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\\.[^\\s]{2,}|www\\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\\.[^\\s]{2,}|https?:\\/\\/(?:www\\.|(?!www))[a-zA-Z0-9]\\.[^\\s]{2,}|www\\.[a-zA-Z0-9]\\.[^\\s]{2,})").matcher(line);
+                Matcher addressMatcher = Pattern.compile("([a-zA-Z]{3,}+\\s)[0-9]{1,}").matcher(line); //([a-zA-Z]{3,}+\s)[0-9]+|([0-9]{1,}+\s([a-zA-Z]{2,}))
 
-//            PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
-//            Iterable<PhoneNumberMatch> numbers = phoneUtil.findNumbers(line, "EN");
-//
-//            for (PhoneNumberMatch num : numbers) {
-//                resultOutput += " \n" + num.rawString();
-//                OCRresult = OCRresult.replace(line, "");
-//            }
-
-            Matcher m = Pattern.compile("[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+").matcher(line);
-            while (m.find()) {
-                resultOutput += " \n EMAIL: " + m.group();
-                OCRresult = OCRresult.replace(line, "");
-            }
-
-            Matcher nameMatcher = Pattern.compile("([A-ZĆČŠŽ][A-ZĆČŠŽa-zéćčšž]*[ ]+[A-ZĆČŠŽ][A-ZĆČŠŽa-zéćčšž]*)[ ]*?$").matcher(line);
-
-            if (!nameDone) {
-                while (nameMatcher.find()) {
+                if (emailMatcher.find()) {
+                    businessCardData.emails.add(emailMatcher.group());
+                } else if (webMatcher.find()) {
+                    businessCardData.url.add(webMatcher.group());
+                } else if (nameMatcher.find()) {
                     if (!nameDone) {
-                        resultOutput += " \n NAME: " + nameMatcher.group();
-                        OCRresult = OCRresult.replace(line, "");
+                        businessCardData.name = nameMatcher.group();
                         nameDone = true;
+                    } else if (addressMatcher.find()) {
+                        businessCardData.addresses.add(line);
+                    } else {
+                        businessCardData.other.add(line);
                     }
+                } else if (addressMatcher.find()) {
+                    businessCardData.addresses.add(line);
+                } else {
+                    businessCardData.other.add(line);
                 }
             }
         }
 
+        resultOutput += "Name: " + businessCardData.name + "\n";
+        resultOutput += "Mobile: " + businessCardData.mobile + "\n";
+        resultOutput += "Telephone: " + businessCardData.telephone + "\n";
+        resultOutput += "Company: " + businessCardData.company + "\n";
+
+        resultOutput += "Url:\n";
+        for (String url : businessCardData.url) {
+            resultOutput += url + "\n";
+        }
+
+        resultOutput += "Email:\n";
+        for (String email : businessCardData.emails) {
+            resultOutput += email + "\n";
+        }
+
+        resultOutput += "Address: ";
+        for (String address : businessCardData.addresses) {
+            resultOutput += address + " ";
+        }
+
+        resultOutput += "\n\nOther:\n";
+        for (String other : businessCardData.other) {
+            resultOutput += other + "\n";
+        }
+
         displayText.setText(resultOutput);
+    }
+
+    private ArrayList<String> separate(ArrayList<String> currentArray, String separator) {
+        ArrayList<String> stringList = new ArrayList<>();
+
+        for (String item : currentArray) {
+            String[] splitItems = item.split(separator);
+            if (splitItems.length > 1) {
+                for (String newItem : splitItems) {
+                    stringList.add(newItem);
+                }
+            } else {
+                stringList.add(item);
+            }
+        }
+
+        return  stringList;
     }
 
     private void checkFile(File dir) {
