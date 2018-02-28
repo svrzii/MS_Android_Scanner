@@ -36,7 +36,6 @@
         <activity
             android:name=".ScannerActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
-            android:label="@string/title_activity_document_scanner"
             android:screenOrientation="portrait"
             android:theme="@style/FullscreenTheme.NoActionBar">
 
