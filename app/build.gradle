@@ -1,11 +1,11 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 26
+    compileSdkVersion 27
     defaultConfig {
         applicationId "com.example.matejsvrznjak.ms_scanner"
-        minSdkVersion 16
-        targetSdkVersion 26
+        minSdkVersion 21
+        targetSdkVersion 27
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -21,7 +21,12 @@ android {
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation project(':libs:opencv')
-    compile group: 'com.googlecode.libphonenumber', name: 'libphonenumber', version: '4.3'
+    compile 'com.googlecode.libphonenumber:libphonenumber:4.3'
     compile 'com.rmtheis:tess-two:8.0.0'
     compile 'com.theartofdev.edmodo:android-image-cropper:2.6.+'
+    compile 'com.android.support:design:27.1.0'
+
+    compile 'com.google.zxing:core:3.0.1'
+    compile 'com.android.support:appcompat-v7:27.0.2'
+    compile 'com.android.support:support-v4:27.0.2'
 }
