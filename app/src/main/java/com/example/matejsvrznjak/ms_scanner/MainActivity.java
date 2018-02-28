@@ -3,6 +3,7 @@ package com.example.matejsvrznjak.ms_scanner;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -93,6 +94,41 @@ public class MainActivity extends AppCompatActivity {
         mTess.setVariable("tessedit_char_whitelist", "+-:.,;()@/0123456789abcčćdđéefghijklmnopqrsštuvwxyzžABCČĆDĐEFGHIJKLMNOPQRSŠTUVWXYZŽ");
         checkFile(new File(datapath + "tessdata/"));
         mTess.init(datapath, language);
+
+
+
+        try {
+
+
+            String uri = getIntent().getExtras().getString("bitmap_uri");
+            if (uri != null) {
+                Uri imgURI = Uri.parse(uri);
+                ImageView imageView = findViewById(R.id.quick_start_cropped_image);
+                imageView.setImageURI(imgURI);
+            }
+
+
+//            openMainWithImage();
+        } catch (Exception e) {
+            Log.d("LOAD IMAGE ", e.getLocalizedMessage());
+        }
+
+
+//        long addr = getIntent().getLongExtra("processedImage", 0);
+//        Mat tempImg = new Mat(addr);
+//
+//        if (tempImg != null) {
+//            Mat img = tempImg.clone();
+//
+//            Bitmap bmp = Bitmap.createBitmap(img.cols(), img.rows(), Bitmap.Config.ARGB_8888);
+//            Utils.matToBitmap(imageMat, bmp);
+//
+//            ImageView imageView = findViewById(R.id.quick_start_cropped_image);
+//
+//            imageView.setImageBitmap(bmp);
+//            processImage(bmp);
+//
+//        }
 
 //        if (!OpenCVLoader.initDebug()) {
 //            //OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_4_0, this, mLoaderCallback);

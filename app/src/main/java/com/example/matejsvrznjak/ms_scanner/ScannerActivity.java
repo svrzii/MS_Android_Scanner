@@ -58,6 +58,7 @@ import com.example.matejsvrznjak.ms_scanner.views.HUDCanvasView;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -183,7 +184,7 @@ public class ScannerActivity extends AppCompatActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-         super.onCreate(savedInstanceState);
+        super.onCreate(savedInstanceState);
 
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -243,13 +244,13 @@ public class ScannerActivity extends AppCompatActivity
         });
 
         widgetCameraIntent = getIntent().getBooleanExtra(WidgetCameraIntent, false);
-         if (widgetCameraIntent) {
-             Intent i = new Intent();
-             i.setAction(Intent.ACTION_MAIN);
-             i.addCategory(Intent.CATEGORY_LAUNCHER);
-             i.setComponent(getIntent().getComponent());
-             setIntent(i);
-         }
+        if (widgetCameraIntent) {
+            Intent i = new Intent();
+            i.setAction(Intent.ACTION_MAIN);
+            i.addCategory(Intent.CATEGORY_LAUNCHER);
+            i.setComponent(getIntent().getComponent());
+            setIntent(i);
+        }
     }
 
     public boolean setFlash(boolean stateFlash) {
@@ -448,6 +449,7 @@ public class ScannerActivity extends AppCompatActivity
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+
                 mWaitSpinner.setVisibility(View.GONE);
             }
         });
@@ -779,230 +781,260 @@ public class ScannerActivity extends AppCompatActivity
 
     }
 
+     public void openMainWithImage(String bitmap) {
+//         long addr = img.getNativeObjAddr();
+         Intent intent = new Intent(this, MainActivity.class);
+//         intent.putExtra( "processedImage", addr);
+         intent.putExtra("bitmap_uri", bitmap);
+         startActivity(intent);
+//         finish();
+     }
     public void saveDocument(ScannedDocument scannedDocument) {
 
-        Mat doc = (scannedDocument.processed != null) ? scannedDocument.processed : scannedDocument.original;
-        Intent intent = getIntent();
-        String intentText = intent.toString();
-        Log.d(TAG, "intent text: " + intentText);
-        if (intent.getAction() != null) {
+        try {
 
-            String fileName;
-            boolean isIntent = false;
-            Uri fileUri = null;
-            if (intent.getAction().equals("android.media.action.IMAGE_CAPTURE")) {
-                fileUri = ((Uri) intent.getParcelableExtra(MediaStore.EXTRA_OUTPUT));
-                Log.d(TAG, "intent uri: " + fileUri.toString());
-                try {
-                    fileName = File.createTempFile("onsFile", ".jpg", this.getCacheDir()).getPath();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    return;
+            Mat imageMat = (scannedDocument.processed != null) ? scannedDocument.processed : scannedDocument.original;
+
+            final Bitmap bitmap = Bitmap.createBitmap(imageMat.cols(), imageMat.rows(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(imageMat, bitmap);
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    openMainWithImage(bitmap.toString());
                 }
-                isIntent = true;
-            } else {
-                File folder = new File(Environment.getExternalStorageDirectory().toString()
-                        + "/ConTextScanner");
-                if (!folder.exists()) {
-                    folder.mkdir();
-                    Log.d(TAG, "wrote: created folder " + folder.getPath());
-                }
-                fileName = Environment.getExternalStorageDirectory().toString()
-                        + "/ConTextScanner/DOC-"
-                        + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date())
-                        + ".jpg";
-            }
+            });
 
-            Mat endDoc = new Mat(Double.valueOf(doc.size().width).intValue(),
-                    Double.valueOf(doc.size().height).intValue(), CvType.CV_8UC4);
+//            openMainWithImage();
+        } catch (Exception e) {
+            Log.d(TAG, "saveDocument: " + e.getLocalizedMessage());
+        }
 
-            Core.flip(doc.t(), endDoc, 1);
+//
 
-            Imgcodecs.imwrite(fileName, endDoc);
-            endDoc.release();
+//        Intent intent = getIntent();
+//        String intentText = intent.toString();
+//        Log.d(TAG, "intent text: " + intentText);
+//        if (intent.getAction() != null) {
+//
+//            String fileName;
+//            boolean isIntent = false;
+//            Uri fileUri = null;
+//            if (intent.getAction().equals("android.media.action.IMAGE_CAPTURE")) {
+//                fileUri = ((Uri) intent.getParcelableExtra(MediaStore.EXTRA_OUTPUT));
+//                Log.d(TAG, "intent uri: " + fileUri.toString());
+//                try {
+//                    fileName = File.createTempFile("onsFile", ".jpg", this.getCacheDir()).getPath();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                    return;
+//                }
+//                isIntent = true;
+//            } else {
+//                File folder = new File(Environment.getExternalStorageDirectory().toString()
+//                        + "/MSScanner");
+//                if (!folder.exists()) {
+//                    folder.mkdir();
+//                    Log.d(TAG, "wrote: created folder " + folder.getPath());
+//                }
+//                fileName = Environment.getExternalStorageDirectory().toString()
+//                        + "/MSScanner/DOC-"
+//                        + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date())
+//                        + ".jpg";
+//            }
+//
+//            Mat endDoc = new Mat(Double.valueOf(doc.size().width).intValue(),
+//                    Double.valueOf(doc.size().height).intValue(), CvType.CV_8UC4);
+//
+//            Core.flip(doc.t(), endDoc, 1);
+//
+//            Imgcodecs.imwrite(fileName, endDoc);
+//            endDoc.release();
 
-            try {
-                ExifInterface exif = new ExifInterface(fileName);
-                exif.setAttribute("UserComment", "Generated using ConTextScanner");
-                String nowFormatted = mDateFormat.format(new Date().getTime());
-                exif.setAttribute(ExifInterface.TAG_DATETIME, nowFormatted);
-                exif.setAttribute(ExifInterface.TAG_DATETIME_DIGITIZED, nowFormatted);
-                exif.setAttribute("Software", "ConTextScanner " + BuildConfig.VERSION_NAME);
-                exif.saveAttributes();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            //openMainWithImage();
 
-            if (isIntent) {
-                InputStream inputStream = null;
-                OutputStream realOutputStream = null;
-                try {
-                    inputStream = new FileInputStream(fileName);
-                    realOutputStream = this.getContentResolver().openOutputStream(fileUri);
-                    // Transfer bytes from in to out
-                    byte[] buffer = new byte[1024];
-                    int len;
-                    while ((len = inputStream.read(buffer)) > 0) {
-                        realOutputStream.write(buffer, 0, len);
-                    }
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                    return;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    return;
-                } finally {
-                    try {
-                        inputStream.close();
-                        realOutputStream.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
+//            try {
+//                ExifInterface exif = new ExifInterface(fileName);
+//                exif.setAttribute("UserComment", "Generated using MSScanner");
+//                String nowFormatted = mDateFormat.format(new Date().getTime());
+//                exif.setAttribute(ExifInterface.TAG_DATETIME, nowFormatted);
+//                exif.setAttribute(ExifInterface.TAG_DATETIME_DIGITIZED, nowFormatted);
+//                exif.setAttribute("Software", "MSScanner " + BuildConfig.VERSION_NAME);
+//                exif.saveAttributes();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
 
-            animateDocument(fileName, scannedDocument);
+//            if (isIntent) {
+//                InputStream inputStream = null;
+//                OutputStream realOutputStream = null;
+//                try {
+//                    inputStream = new FileInputStream(fileName);
+//                    realOutputStream = this.getContentResolver().openOutputStream(fileUri);
+//                    // Transfer bytes from in to out
+//                    byte[] buffer = new byte[1024];
+//                    int len;
+//                    while ((len = inputStream.read(buffer)) > 0) {
+//                        realOutputStream.write(buffer, 0, len);
+//                    }
+//                } catch (FileNotFoundException e) {
+//                    e.printStackTrace();
+//                    return;
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                    return;
+//                } finally {
+//                    try {
+//                        inputStream.close();
+//                        realOutputStream.close();
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            }
 
-            Log.d(TAG, "wrote: " + fileName);
+//            animateDocument(fileName, scannedDocument);
 
-            if (isIntent) {
-                new File(fileName).delete();
-                setResult(RESULT_OK, intent);
-                finish();
-            } else {
-                addImageToGallery(fileName, this);
-            }
+//            Log.d(TAG, "wrote: " + fileName);
+//
+//            if (isIntent) {
+//                new File(fileName).delete();
+//                setResult(RESULT_OK, intent);
+//                finish();
+//            } else {
+////                addImageToGallery(fileName, this);
+//            }
 
             // Record goal "PictureTaken"
 //            ScannerApplication.getInstance().trackEvent("Event", "Picture Taken", "Document Scanner Activity");
 
-            refreshCamera();
-        } else {
-            intent.setAction("android.media.action.IMAGE_CAPTURE");
-            saveDocument(scannedDocument);
-        }
+//            refreshCamera();
+//        } else {
+//            intent.setAction("android.media.action.IMAGE_CAPTURE");
+//            saveDocument(scannedDocument);
+//        }
     }
 
-    class AnimationRunnable implements Runnable {
+//    class AnimationRunnable implements Runnable {
+//
+//        private Size imageSize;
+//        private Point[] previewPoints = null;
+//        public Size previewSize = null;
+//        public String fileName = null;
+//        public int width;
+//        public int height;
+//        private Bitmap bitmap;
+//
+//        public AnimationRunnable(String filename, ScannedDocument document) {
+//            this.fileName = filename;
+//            this.imageSize = document.processed.size();
+//
+//            if (document.quadrilateral != null) {
+//                this.previewPoints = document.previewPoints;
+//                this.previewSize = document.previewSize;
+//            }
+//        }
+//
+//        public double hipotenuse(Point a, Point b) {
+//            return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
+//        }
+//
+//        @Override
+//        public void run() {
+//            final ImageView imageView = (ImageView) findViewById(R.id.scannedAnimation);
+//
+//            Display display = getWindowManager().getDefaultDisplay();
+//            android.graphics.Point size = new android.graphics.Point();
+//            display.getRealSize(size);
+//
+//            int width = Math.min(size.x, size.y);
+//            int height = Math.max(size.x, size.y);
+//
+//            // ATENTION: captured images are always in landscape, values should be swapped
+//            double imageWidth = imageSize.height;
+//            double imageHeight = imageSize.width;
+//
+//            RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) imageView.getLayoutParams();
+//
+//            if (previewPoints != null) {
+//                double documentLeftHeight = hipotenuse(previewPoints[0], previewPoints[1]);
+//                double documentBottomWidth = hipotenuse(previewPoints[1], previewPoints[2]);
+//                double documentRightHeight = hipotenuse(previewPoints[2], previewPoints[3]);
+//                double documentTopWidth = hipotenuse(previewPoints[3], previewPoints[0]);
+//
+//                double documentWidth = Math.max(documentTopWidth, documentBottomWidth);
+//                double documentHeight = Math.max(documentLeftHeight, documentRightHeight);
+//
+//                Log.d(TAG, "device: " + width + "x" + height + " image: " + imageWidth + "x" + imageHeight + " document: " + documentWidth + "x" + documentHeight);
+//                Log.d(TAG, "previewPoints[0] x=" + previewPoints[0].x + " y=" + previewPoints[0].y);
+//                Log.d(TAG, "previewPoints[1] x=" + previewPoints[1].x + " y=" + previewPoints[1].y);
+//                Log.d(TAG, "previewPoints[2] x=" + previewPoints[2].x + " y=" + previewPoints[2].y);
+//                Log.d(TAG, "previewPoints[3] x=" + previewPoints[3].x + " y=" + previewPoints[3].y);
+//
+//                // ATENTION: again, swap width and height
+//                double xRatio = width / previewSize.height;
+//                double yRatio = height / previewSize.width;
+//
+//                params.topMargin = (int) (previewPoints[3].x * yRatio);
+//                params.leftMargin = (int) ((previewSize.height - previewPoints[3].y) * xRatio);
+//                params.width = (int) (documentWidth * xRatio);
+//                params.height = (int) (documentHeight * yRatio);
+//            } else {
+//                params.topMargin = height / 4;
+//                params.leftMargin = width / 4;
+//                params.width = width / 2;
+//                params.height = height / 2;
+//            }
 
-        private Size imageSize;
-        private Point[] previewPoints = null;
-        public Size previewSize = null;
-        public String fileName = null;
-        public int width;
-        public int height;
-        private Bitmap bitmap;
+//            bitmap = decodeSampledBitmapFromUri(fileName, params.width, params.height);
 
-        public AnimationRunnable(String filename, ScannedDocument document) {
-            this.fileName = filename;
-            this.imageSize = document.processed.size();
-
-            if (document.quadrilateral != null) {
-                this.previewPoints = document.previewPoints;
-                this.previewSize = document.previewSize;
-            }
-        }
-
-        public double hipotenuse(Point a, Point b) {
-            return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
-        }
-
-        @Override
-        public void run() {
-            final ImageView imageView = (ImageView) findViewById(R.id.scannedAnimation);
-
-            Display display = getWindowManager().getDefaultDisplay();
-            android.graphics.Point size = new android.graphics.Point();
-            display.getRealSize(size);
-
-            int width = Math.min(size.x, size.y);
-            int height = Math.max(size.x, size.y);
-
-            // ATENTION: captured images are always in landscape, values should be swapped
-            double imageWidth = imageSize.height;
-            double imageHeight = imageSize.width;
-
-            RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) imageView.getLayoutParams();
-
-            if (previewPoints != null) {
-                double documentLeftHeight = hipotenuse(previewPoints[0], previewPoints[1]);
-                double documentBottomWidth = hipotenuse(previewPoints[1], previewPoints[2]);
-                double documentRightHeight = hipotenuse(previewPoints[2], previewPoints[3]);
-                double documentTopWidth = hipotenuse(previewPoints[3], previewPoints[0]);
-
-                double documentWidth = Math.max(documentTopWidth, documentBottomWidth);
-                double documentHeight = Math.max(documentLeftHeight, documentRightHeight);
-
-                Log.d(TAG, "device: " + width + "x" + height + " image: " + imageWidth + "x" + imageHeight + " document: " + documentWidth + "x" + documentHeight);
-                Log.d(TAG, "previewPoints[0] x=" + previewPoints[0].x + " y=" + previewPoints[0].y);
-                Log.d(TAG, "previewPoints[1] x=" + previewPoints[1].x + " y=" + previewPoints[1].y);
-                Log.d(TAG, "previewPoints[2] x=" + previewPoints[2].x + " y=" + previewPoints[2].y);
-                Log.d(TAG, "previewPoints[3] x=" + previewPoints[3].x + " y=" + previewPoints[3].y);
-
-                // ATENTION: again, swap width and height
-                double xRatio = width / previewSize.height;
-                double yRatio = height / previewSize.width;
-
-                params.topMargin = (int) (previewPoints[3].x * yRatio);
-                params.leftMargin = (int) ((previewSize.height - previewPoints[3].y) * xRatio);
-                params.width = (int) (documentWidth * xRatio);
-                params.height = (int) (documentHeight * yRatio);
-            } else {
-                params.topMargin = height / 4;
-                params.leftMargin = width / 4;
-                params.width = width / 2;
-                params.height = height / 2;
-            }
-
-            bitmap = decodeSampledBitmapFromUri(fileName, params.width, params.height);
-
-            imageView.setImageBitmap(bitmap);
-
-            imageView.setVisibility(View.VISIBLE);
-
-            TranslateAnimation translateAnimation = new TranslateAnimation(
-                    Animation.ABSOLUTE, 0, Animation.ABSOLUTE, -params.leftMargin,
-                    Animation.ABSOLUTE, 0, Animation.ABSOLUTE, height - params.topMargin
-            );
-
-            ScaleAnimation scaleAnimation = new ScaleAnimation(1, 0, 1, 0);
-
-            AnimationSet animationSet = new AnimationSet(true);
-
-            animationSet.addAnimation(scaleAnimation);
-            animationSet.addAnimation(translateAnimation);
-
-            animationSet.setDuration(600);
-            animationSet.setInterpolator(new AccelerateInterpolator());
-
-            animationSet.setAnimationListener(new Animation.AnimationListener() {
-                @Override
-                public void onAnimationStart(Animation animation) {
-
-                }
-
-                @Override
-                public void onAnimationEnd(Animation animation) {
-                    imageView.setVisibility(View.INVISIBLE);
-                    imageView.setImageBitmap(null);
-                    AnimationRunnable.this.bitmap.recycle();
-                }
-
-                @Override
-                public void onAnimationRepeat(Animation animation) {
-
-                }
-            });
-
-            imageView.startAnimation(animationSet);
-        }
-    }
-
-    private void animateDocument(String filename, ScannedDocument quadrilateral) {
-        AnimationRunnable runnable = new AnimationRunnable(filename, quadrilateral);
-        runOnUiThread(runnable);
-    }
-
+//            imageView.setImageBitmap(bitmap);
+//
+//            imageView.setVisibility(View.VISIBLE);
+//
+//            TranslateAnimation translateAnimation = new TranslateAnimation(
+//                    Animation.ABSOLUTE, 0, Animation.ABSOLUTE, -params.leftMargin,
+//                    Animation.ABSOLUTE, 0, Animation.ABSOLUTE, height - params.topMargin
+//            );
+//
+//            ScaleAnimation scaleAnimation = new ScaleAnimation(1, 0, 1, 0);
+//
+//            AnimationSet animationSet = new AnimationSet(true);
+//
+//            animationSet.addAnimation(scaleAnimation);
+//            animationSet.addAnimation(translateAnimation);
+//
+//            animationSet.setDuration(600);
+//            animationSet.setInterpolator(new AccelerateInterpolator());
+//
+//            animationSet.setAnimationListener(new Animation.AnimationListener() {
+//                @Override
+//                public void onAnimationStart(Animation animation) {
+//
+//                }
+//
+//                @Override
+//                public void onAnimationEnd(Animation animation) {
+//                    imageView.setVisibility(View.INVISIBLE);
+//                    imageView.setImageBitmap(null);
+//                    AnimationRunnable.this.bitmap.recycle();
+//                }
+//
+//                @Override
+//                public void onAnimationRepeat(Animation animation) {
+//
+//                }
+//            });
+//
+//            imageView.startAnimation(animationSet);
+//        }
+//    }
+//
+//    private void animateDocument(String filename, ScannedDocument quadrilateral) {
+//        AnimationRunnable runnable = new AnimationRunnable(filename, quadrilateral);
+//        runOnUiThread(runnable);
+//    }
+//
     private void shootSound() {
         AudioManager meng = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         int volume = meng.getStreamVolume(AudioManager.STREAM_NOTIFICATION);
@@ -1016,7 +1048,7 @@ public class ScannerActivity extends AppCompatActivity
             }
         }
     }
-
+//
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         return false;

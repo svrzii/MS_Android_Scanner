@@ -89,56 +89,55 @@ public class ImageProcessor extends Handler {
                 processPreviewFrame((PreviewFrame) obj.getObj());
             } else if ( command.equals("pictureTaken")) {
                 processPicture((Mat) obj.getObj());
-            } else if ( command.equals("colorMode")) {
-                colorMode=(Boolean) obj.getObj();
-            } else if ( command.equals("filterMode")) {
-                filterMode=(Boolean) obj.getObj();
             }
+//            else if ( command.equals("colorMode")) {
+//                colorMode=(Boolean) obj.getObj();
+//            } else if ( command.equals("filterMode")) {
+//                filterMode=(Boolean) obj.getObj();
+//            }
         }
     }
 
     private void processPreviewFrame( PreviewFrame previewFrame ) {
 
-        Result[] results = {};
-
         Mat frame = previewFrame.getFrame();
 
-        try {
-            results = zxing(frame);
-        } catch (ChecksumException | FormatException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+//        try {
+//            results = zxing(frame);
+//        } catch (ChecksumException | FormatException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        }
 
-        boolean qrOk = false;
-        String currentQR=null;
-
-        for (Result result: results) {
-            String qrText = result.getText();
-            if ( Utils.isMatch(qrText, "^P.. V.. S[0-9]+") && checkQR(qrText)) {
-                Log.d(TAG, "QR Code valid: " + result.getText());
-                qrOk = true;
-                currentQR = qrText;
-                qrResultPoints = result.getResultPoints();
-                break;
-            } else {
-                Log.d(TAG, "QR Code ignored: " + result.getText());
-            }
-        }
+//        boolean qrOk = false;
+//        String currentQR=null;
+//
+//        for (Result result: results) {
+//            String qrText = result.getText();
+//            if ( Utils.isMatch(qrText, "^P.. V.. S[0-9]+") && checkQR(qrText)) {
+//                Log.d(TAG, "QR Code valid: " + result.getText());
+//                qrOk = true;
+//                currentQR = qrText;
+//                qrResultPoints = result.getResultPoints();
+//                break;
+//            } else {
+//                Log.d(TAG, "QR Code ignored: " + result.getText());
+//            }
+//        }
 
         boolean autoMode = previewFrame.isAutoMode();
         boolean previewOnly = previewFrame.isPreviewOnly();
 
-        if ( detectPreviewDocument(frame) && ( (!autoMode && !previewOnly ) || ( autoMode && qrOk ) ) ) {
+        if ( detectPreviewDocument(frame) && ( (!autoMode && !previewOnly ) ) ) {
 
             mMainActivity.waitSpinnerVisible();
 
             mMainActivity.requestPicture();
 
-            if (qrOk) {
-                pageHistory.put(currentQR, new Date().getTime() / 1000);
-                Log.d(TAG, "QR Code scanned: " + currentQR);
-            }
+//            if (qrOk) {
+//                pageHistory.put(currentQR, new Date().getTime() / 1000);
+//                Log.d(TAG, "QR Code scanned: " + currentQR);
+//            }
         }
 
         frame.release();
@@ -159,6 +158,7 @@ public class ImageProcessor extends Handler {
 
         ScannedDocument doc = detectDocument(img);
         mMainActivity.saveDocument(doc);
+
 
         doc.release();
         picture.release();
@@ -197,14 +197,14 @@ public class ImageProcessor extends Handler {
     }
 
 
-    private HashMap<String,Long> pageHistory = new HashMap<>();
-
-    private boolean checkQR(String qrCode) {
-
-        return ! ( pageHistory.containsKey(qrCode) &&
-                pageHistory.get(qrCode) > new Date().getTime()/1000-15) ;
-
-    }
+//    private HashMap<String,Long> pageHistory = new HashMap<>();
+//
+//    private boolean checkQR(String qrCode) {
+//
+//        return ! ( pageHistory.containsKey(qrCode) &&
+//                pageHistory.get(qrCode) > new Date().getTime()/1000-15) ;
+//
+//    }
 
     private boolean detectPreviewDocument(Mat inputRgba) {
 
@@ -266,10 +266,10 @@ public class ImageProcessor extends Handler {
         PathShape newBox = new PathShape(path , previewWidth , previewHeight);
 
         Paint paint = new Paint();
-        paint.setColor(Color.argb(64, 0, 255, 0));
+        paint.setColor(Color.argb(64, 0, 169, 231));
 
         Paint border = new Paint();
-        border.setColor(Color.rgb(0, 255, 0));
+        border.setColor(Color.rgb(0, 169, 231));
         border.setStrokeWidth(5);
 
         hud.clear();
@@ -516,38 +516,38 @@ public class ImageProcessor extends Handler {
 
 
 
-    public Result[] zxing( Mat inputImage ) throws ChecksumException, FormatException {
-
-        int w = inputImage.width();
-        int h = inputImage.height();
-
-        Mat southEast;
-
-        if (mBugRotate) {
-            southEast = inputImage.submat(h-h/4 , h , 0 , w/2 - h/4 );
-        } else {
-            southEast = inputImage.submat(0, h / 4, w / 2 + h / 4, w);
-        }
-
-        Bitmap bMap = Bitmap.createBitmap(southEast.width(), southEast.height(), Bitmap.Config.ARGB_8888);
-        org.opencv.android.Utils.matToBitmap(southEast, bMap);
-        southEast.release();
-        int[] intArray = new int[bMap.getWidth()*bMap.getHeight()];
-        //copy pixel data from the Bitmap into the 'intArray' array
-        bMap.getPixels(intArray, 0, bMap.getWidth(), 0, 0, bMap.getWidth(), bMap.getHeight());
-
-        LuminanceSource source = new RGBLuminanceSource(bMap.getWidth(), bMap.getHeight(),intArray);
-
-        BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
-
-        Result[] results = {};
-        try {
-            results = qrCodeMultiReader.decodeMultiple(bitmap);
-        }
-        catch (NotFoundException ignored) {
-        }
-        return results;
-    }
+//    public Result[] zxing( Mat inputImage ) throws ChecksumException, FormatException {
+//
+//        int w = inputImage.width();
+//        int h = inputImage.height();
+//
+//        Mat southEast;
+//
+//        if (mBugRotate) {
+//            southEast = inputImage.submat(h-h/4 , h , 0 , w/2 - h/4 );
+//        } else {
+//            southEast = inputImage.submat(0, h / 4, w / 2 + h / 4, w);
+//        }
+//
+//        Bitmap bMap = Bitmap.createBitmap(southEast.width(), southEast.height(), Bitmap.Config.ARGB_8888);
+//        org.opencv.android.Utils.matToBitmap(southEast, bMap);
+//        southEast.release();
+//        int[] intArray = new int[bMap.getWidth()*bMap.getHeight()];
+//        //copy pixel data from the Bitmap into the 'intArray' array
+//        bMap.getPixels(intArray, 0, bMap.getWidth(), 0, 0, bMap.getWidth(), bMap.getHeight());
+//
+//        LuminanceSource source = new RGBLuminanceSource(bMap.getWidth(), bMap.getHeight(),intArray);
+//
+//        BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
+//
+//        Result[] results = {};
+//        try {
+//            results = qrCodeMultiReader.decodeMultiple(bitmap);
+//        }
+//        catch (NotFoundException ignored) {
+//        }
+//        return results;
+//    }
 
     public void setBugRotate(boolean bugRotate) {
         mBugRotate = bugRotate;
