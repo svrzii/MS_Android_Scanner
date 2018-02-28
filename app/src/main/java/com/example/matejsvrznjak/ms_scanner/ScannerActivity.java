@@ -199,15 +199,15 @@ public class ScannerActivity extends AppCompatActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        try {
+//        try {
 
             super.onCreate(savedInstanceState);
 
             mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-
-            if (mSharedPref.getBoolean("isFirstRun", true) && !mSharedPref.getBoolean("usage_stats", false)) {
-                statsOptInDialog();
-            }
+//
+//            if (mSharedPref.getBoolean("isFirstRun", true) && !mSharedPref.getBoolean("usage_stats", false)) {
+//                statsOptInDialog();
+//            }
 //            ScannerApplication.getInstance().trackScreenView("Document Scanner Activity");
 
             setContentView(R.layout.activity_scanner);
@@ -266,171 +266,8 @@ public class ScannerActivity extends AppCompatActivity
                 }
             });
 
-//            final ImageView colorModeButton = (ImageView) findViewById(R.id.colorModeButton);
-//
-//            colorModeButton.setOnClickListener(new View.OnClickListener() {
-//
-//                @Override
-//                public void onClick(View v) {
-//                    colorMode = !colorMode;
-//                    ((ImageView) v).setColorFilter(colorMode ? 0xFFFFFFFF : 0xFF64B5F6);
-//
-//                    sendImageProcessorMessage("colorMode", colorMode);
-//
-//                    Toast.makeText(getApplicationContext(), colorMode ? R.string.colorMode : R.string.bwMode, Toast.LENGTH_SHORT).show();
-//
-//                }
-//            });
-//
-//            final ImageView filterModeButton = (ImageView) findViewById(R.id.filterModeButton);
-//
-//            filterModeButton.setOnClickListener(new View.OnClickListener() {
-//
-//                @Override
-//                public void onClick(View v) {
-//                    filterMode = !filterMode;
-//                    ((ImageView) v).setColorFilter(filterMode ? 0xFFFFFFFF : 0xFF64B5F6);
-//
-//                    sendImageProcessorMessage("filterMode", filterMode);
-//
-//                    Toast.makeText(getApplicationContext(), filterMode ? R.string.filterModeOn : R.string.filterModeOff, Toast.LENGTH_SHORT).show();
-//
-//                }
-//            });
-//
-//            final ImageView flashModeButton = (ImageView) findViewById(R.id.flashModeButton);
-//
-//            flashModeButton.setOnClickListener(new View.OnClickListener() {
-//
-//                @Override
-//                public void onClick(View v) {
-//                    mFlashMode = setFlash(!mFlashMode);
-//                    ((ImageView) v).setColorFilter(mFlashMode ? 0xFFFFFFFF : 0xFF64B5F6);
-//
-//                }
-//            });
-//
-//            final ImageView autoModeButton = (ImageView) findViewById(R.id.autoModeButton);
-//
-//            autoModeButton.setOnClickListener(new View.OnClickListener() {
-//
-//                @Override
-//                public void onClick(View v) {
-//                    autoMode = !autoMode;
-//                    ((ImageView) v).setColorFilter(autoMode ? 0xFFFFFFFF : 0xFF64B5F6);
-//                    Toast.makeText(getApplicationContext(), autoMode ? R.string.autoMode : R.string.manualMode, Toast.LENGTH_SHORT).show();
-//                }
-//            });
-//
-//            final ImageView settingsButton = (ImageView) findViewById(R.id.settingsButton);
-//
-//            settingsButton.setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    Intent intent = new Intent(v.getContext(), SettingsActivity.class);
-//                    startActivity(intent);
-//                }
-//            });
-
-
-//            final FloatingActionButton galleryButton = (FloatingActionButton) findViewById(R.id.galleryButton);
-//
-//            galleryButton.setOnClickListener(new View.OnClickListener() {
-//
-//                @Override
-//                public void onClick(View v) {
-//                    Intent intent = new Intent(v.getContext(), GalleryGridActivity.class);
-//                    startActivity(intent);
-//                }
-//            });
-
-//            mFabToolbar = (FABToolbarLayout) findViewById(R.id.fabtoolbar);
-
-//            FloatingActionButton fabToolbarButton = (FloatingActionButton) findViewById(R.id.fabtoolbar_fab);
-//            fabToolbarButton.setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    mFabToolbar.show();
-//                }
-//            });
-
-//            findViewById(R.id.hideToolbarButton).setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    mFabToolbar.hide();
-//                }
-//            });
-
-//            statusMessage = (TextView) findViewById(R.id.status_message);
-
-//            ocr_click = (Button) findViewById(R.id.ocr_click);
-
-//            ocr_click.setOnTouchListener(new View.OnTouchListener() {
-//                @Override
-//                public boolean onTouch(View view, MotionEvent motionEvent) {
-//                    switch (motionEvent.getAction()) {
-//                        case MotionEvent.ACTION_DOWN: {
-//                            Button b = (Button) view;
-//                            b.getBackground().setColorFilter(0x77000000, PorterDuff.Mode.SRC_ATOP);
-//                            view.invalidate();
-//                            break;
-//                        }
-////                        case MotionEvent.ACTION_UP: {
-////                            onOCRClick(view);
-////                        }
-//                        case MotionEvent.ACTION_CANCEL: {
-//                            Button b = (Button) view;
-//                            b.getBackground().clearColorFilter();
-//                            view.invalidate();
-//                            break;
-//                        }
-//                    }
-//                    return true;
-//                }
-//            });
-
-
-//            saved_ocr_texts = (Button) findViewById(R.id.saved_ocr_texts);
-//
-//            saved_ocr_texts.setOnTouchListener(new View.OnTouchListener() {
-//                @Override
-//                public boolean onTouch(View view, MotionEvent motionEvent) {
-//                    switch (motionEvent.getAction()) {
-//                        case MotionEvent.ACTION_DOWN: {
-//                            Button b = (Button) view;
-//                            b.getBackground().setColorFilter(0x77000000, PorterDuff.Mode.SRC_ATOP);
-//                            view.invalidate();
-//                            break;
-//                        }
-//                        case MotionEvent.ACTION_UP: {
-//                            Intent intent = new Intent(view.getContext(), SavedTextsList.class);
-//                            startActivity(intent);
-//                        }
-//                        case MotionEvent.ACTION_CANCEL: {
-//                            Button b = (Button) view;
-//                            b.getBackground().clearColorFilter();
-//                            view.invalidate();
-//                            break;
-//                        }
-//                    }
-//                    return true;
-//                }
-//            });
-
-
             widgetCameraIntent = getIntent().getBooleanExtra(WidgetCameraIntent, false);
 //            widgetOCRIntent = getIntent().getBooleanExtra(OcrCaptureActivity.WidgetOCRIntent, false);
-
-
-//            if (widgetOCRIntent) {
-//                Intent widgetOCRData = getIntent();
-//                if (widgetOCRData != null) {
-//                    statusMessage.setText(R.string.ocr_success);
-//                }else {
-//                    statusMessage.setText(R.string.ocr_failure);
-//                    Log.d(TAG, "No Text captured, intent data is null");
-//                }
-//            }
 
             if (widgetCameraIntent) {
                 Intent i = new Intent();
@@ -440,14 +277,14 @@ public class ScannerActivity extends AppCompatActivity
                 setIntent(i);
             }
 
-        } catch (Exception e) {
-            Dialog d = new Dialog(this);
-            d.setTitle(R.string.error_dsa);
-            TextView tv = new TextView(this);
-            tv.setText(e.toString());
-            d.setContentView(tv);
-            d.show();
-        }
+//        } catch (Exception e) {
+//            Dialog d = new Dialog(this);
+//            d.setTitle(R.string.error_dsa);
+//            TextView tv = new TextView(this);
+//            tv.setText(e.toString());
+//            d.setContentView(tv);
+//            d.show();
+//        }
     }
 
 //    public void onOCRClick(View v) {
@@ -560,7 +397,7 @@ public class ScannerActivity extends AppCompatActivity
 
         // Trigger the initial hide() shortly after the activity has been
         // created, to briefly hint to the user that UI controls are available.
-        delayedHide(100);
+//        delayedHide(100);
     }
 
     private void toggle() {
@@ -641,8 +478,9 @@ public class ScannerActivity extends AppCompatActivity
 
         checkCreatePermissions();
 
-        mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+
         //CustomOpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_1_0, this, mLoaderCallback);
+        mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
 
         if (mImageThread == null) {
             mImageThread = new HandlerThread("Worker Thread");
@@ -1251,38 +1089,38 @@ public class ScannerActivity extends AppCompatActivity
     }
 
 
-    private void statsOptInDialog() {
-        AlertDialog.Builder statsOptInDialog = new AlertDialog.Builder(this);
-
-        statsOptInDialog.setTitle(getString(R.string.stats_optin_title));
-        statsOptInDialog.setMessage(getString(R.string.stats_optin_text));
-
-        statsOptInDialog.setPositiveButton(R.string.answer_yes, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                mSharedPref.edit().putBoolean("usage_stats", true).commit();
-                mSharedPref.edit().putBoolean("isFirstRun", false).commit();
-                dialog.dismiss();
-            }
-        });
-
-        statsOptInDialog.setNegativeButton(R.string.answer_no, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                mSharedPref.edit().putBoolean("usage_stats", false).commit();
-                mSharedPref.edit().putBoolean("isFirstRun", false).commit();
-                dialog.dismiss();
-            }
-        });
-
-        statsOptInDialog.setNeutralButton(R.string.answer_later, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-
-        statsOptInDialog.create().show();
-    }
+//    private void statsOptInDialog() {
+//        AlertDialog.Builder statsOptInDialog = new AlertDialog.Builder(this);
+//
+//        statsOptInDialog.setTitle(getString(R.string.stats_optin_title));
+//        statsOptInDialog.setMessage(getString(R.string.stats_optin_text));
+//
+//        statsOptInDialog.setPositiveButton(R.string.answer_yes, new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//                mSharedPref.edit().putBoolean("usage_stats", true).commit();
+//                mSharedPref.edit().putBoolean("isFirstRun", false).commit();
+//                dialog.dismiss();
+//            }
+//        });
+//
+//        statsOptInDialog.setNegativeButton(R.string.answer_no, new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//                mSharedPref.edit().putBoolean("usage_stats", false).commit();
+//                mSharedPref.edit().putBoolean("isFirstRun", false).commit();
+//                dialog.dismiss();
+//            }
+//        });
+//
+//        statsOptInDialog.setNeutralButton(R.string.answer_later, new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//                dialog.dismiss();
+//            }
+//        });
+//
+//        statsOptInDialog.create().show();
+//    }
 
 }

@@ -118,7 +118,7 @@
             android:background="@color/transparent"
             android:visibility="invisible" />
 
-        <com.myapps.documentscanner.views.HUDCanvasView
+        <com.example.matejsvrznjak.ms_scanner.views.HUDCanvasView
             android:id="@+id/hud"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
