@@ -8,6 +8,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.ActionBar;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -70,6 +71,7 @@ import org.opencv.imgproc.Imgproc;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -210,6 +212,8 @@ public class ScannerActivity extends AppCompatActivity
         android.graphics.Point size = new android.graphics.Point();
         display.getRealSize(size);
         scanDocButton = (Button) findViewById(R.id.scanDocButton);
+
+        scanClicked = true;
 
         scanDocButton.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -781,31 +785,36 @@ public class ScannerActivity extends AppCompatActivity
 
     }
 
-     public void openMainWithImage(String bitmap) {
-//         long addr = img.getNativeObjAddr();
+     public void openMainWithImage(String imagePath, Boolean processed) {
          Intent intent = new Intent(this, MainActivity.class);
-//         intent.putExtra( "processedImage", addr);
-         intent.putExtra("bitmap_uri", bitmap);
+         intent.putExtra("imagePath", imagePath);
+         intent.putExtra("processed", processed);
          startActivity(intent);
-//         finish();
      }
     public void saveDocument(ScannedDocument scannedDocument) {
 
         try {
+            Mat imageMat;
+            final Boolean processed = scannedDocument.processed != null;
+            if (scannedDocument.processed != null) {
+                imageMat = scannedDocument.processed;
+            } else {
+                imageMat = scannedDocument.original;
+            }
 
-            Mat imageMat = (scannedDocument.processed != null) ? scannedDocument.processed : scannedDocument.original;
+            Core.rotate(imageMat, imageMat, Core.ROTATE_90_CLOCKWISE);
 
-            final Bitmap bitmap = Bitmap.createBitmap(imageMat.cols(), imageMat.rows(), Bitmap.Config.ARGB_8888);
+            Bitmap bitmap = Bitmap.createBitmap(imageMat.cols(), imageMat.rows(), Bitmap.Config.ARGB_8888);
             Utils.matToBitmap(imageMat, bitmap);
+
+            final String imagePath = saveToInternalStorage(bitmap);
 
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    openMainWithImage(bitmap.toString());
+                    openMainWithImage(imagePath, processed);
                 }
             });
-
-//            openMainWithImage();
         } catch (Exception e) {
             Log.d(TAG, "saveDocument: " + e.getLocalizedMessage());
         }
@@ -1035,6 +1044,30 @@ public class ScannerActivity extends AppCompatActivity
 //        runOnUiThread(runnable);
 //    }
 //
+private String saveToInternalStorage(Bitmap bitmapImage){
+    ContextWrapper cw = new ContextWrapper(getApplicationContext());
+    // path to /data/data/yourapp/app_data/imageDir
+    File directory = cw.getDir("scannedImageDir", Context.MODE_PRIVATE);
+    // Create imageDir
+    File mypath = new File(directory,"scannedImage.jpg");
+
+    FileOutputStream fos = null;
+    try {
+        fos = new FileOutputStream(mypath);
+        // Use the compress method on the BitMap object to write image to the OutputStream
+        bitmapImage.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+    } catch (Exception e) {
+        e.printStackTrace();
+    } finally {
+        try {
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    return directory.getAbsolutePath();
+}
+
     private void shootSound() {
         AudioManager meng = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         int volume = meng.getStreamVolume(AudioManager.STREAM_NOTIFICATION);

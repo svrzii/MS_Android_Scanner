@@ -3,6 +3,7 @@ package com.example.matejsvrznjak.ms_scanner;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
@@ -35,6 +36,7 @@ import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -97,23 +99,12 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-        try {
+        String imagePath = getIntent().getExtras().getString("imagePath");
+        Boolean processed = getIntent().getExtras().getBoolean("processed");
 
-
-            String uri = getIntent().getExtras().getString("bitmap_uri");
-            if (uri != null) {
-                Uri imgURI = Uri.parse(uri);
-                ImageView imageView = findViewById(R.id.quick_start_cropped_image);
-                imageView.setImageURI(imgURI);
-            }
-
-
-//            openMainWithImage();
-        } catch (Exception e) {
-            Log.d("LOAD IMAGE ", e.getLocalizedMessage());
+        if (imagePath != null) {
+            loadImageFromStorage(imagePath, processed);
         }
-
-
 //        long addr = getIntent().getLongExtra("processedImage", 0);
 //        Mat tempImg = new Mat(addr);
 //
@@ -153,14 +144,6 @@ public class MainActivity extends AppCompatActivity {
 //        Rect box = new Rect(5, 10, 20, 20);
 //        Rect box= new Rect(5,10,20,30);
 //        android.graphics.Rect box = new android.graphics.Rect(50, 100, 150, 200);
-
-        CropImage.activity()
-                .setGuidelines(CropImageView.Guidelines.ON)
-                .setActivityTitle("My Crop")
-                .setCropShape(CropImageView.CropShape.RECTANGLE)
-                .setCropMenuCropButtonTitle("Done")
-//                .setInitialCropWindowRectangle(box)
-                .start(this);
     }
 
     @Override
@@ -172,19 +155,19 @@ public class MainActivity extends AppCompatActivity {
 
                 ImageView imageView = findViewById(R.id.quick_start_cropped_image);
                 try {
-                    imageMat = new Mat();
+//                    imageMat = new Mat();
                     Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), result.getUri());
-                    Bitmap bmp32 = bitmap.copy(Bitmap.Config.ARGB_8888, true);
-                    Utils.bitmapToMat(bmp32, imageMat);
-                    Imgproc.cvtColor(imageMat, imageMat, Imgproc.COLOR_BGR2GRAY);
-                    Imgproc.blur(imageMat, imageMat, new Size(3.0, 3.0));
-                    Imgproc.threshold(imageMat, imageMat, 0, 255, Imgproc.THRESH_OTSU);
+//                    Bitmap bmp32 = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+//                    Utils.bitmapToMat(bmp32, imageMat);
+//                    Imgproc.cvtColor(imageMat, imageMat, Imgproc.COLOR_BGR2GRAY);
+//                    Imgproc.blur(imageMat, imageMat, new Size(3.0, 3.0));
+//                    Imgproc.threshold(imageMat, imageMat, 0, 255, Imgproc.THRESH_OTSU);
+//
+//                    Bitmap bmp = Bitmap.createBitmap(imageMat.cols(), imageMat.rows(), Bitmap.Config.ARGB_8888);
+//                    Utils.matToBitmap(imageMat, bmp);
 
-                    Bitmap bmp = Bitmap.createBitmap(imageMat.cols(), imageMat.rows(), Bitmap.Config.ARGB_8888);
-                    Utils.matToBitmap(imageMat, bmp);
-
-                    imageView.setImageBitmap(bmp);
-                    processImage(bmp);
+                    imageView.setImageBitmap(bitmap);
+                    processImage(bitmap);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -442,5 +425,28 @@ public class MainActivity extends AppCompatActivity {
         return (dx1 * dx2 + dy1 * dy2)
                 / Math.sqrt((dx1 * dx1 + dy1 * dy1) * (dx2 * dx2 + dy2 * dy2)
                 + 1e-10);
+    }
+
+    private void loadImageFromStorage(String path, Boolean processed) {
+
+        try {
+            File f = new File(path, "scannedImage.jpg");
+            Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
+
+            if (!processed) {
+                Uri imgURI = Uri.fromFile(f);
+                if (imgURI != null) {
+                    CropImage.activity(imgURI)
+                            .start(this);
+                }
+            } else {
+                ImageView img = findViewById(R.id.quick_start_cropped_image);
+                img.setImageBitmap(b);
+                processImage(b);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
     }
 }
