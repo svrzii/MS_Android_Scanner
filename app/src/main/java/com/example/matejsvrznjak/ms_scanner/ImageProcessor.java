@@ -116,31 +116,20 @@ public class ImageProcessor extends Handler {
 
         doc.release();
         picture.release();
-
-        mMainActivity.setImageProcessorBusy(false);
-        mMainActivity.waitSpinnerInvisible();
     }
-
 
     private ScannedDocument detectDocument(Mat inputRgba) {
         ArrayList<MatOfPoint> contours = findContours(inputRgba);
-
         ScannedDocument sd = new ScannedDocument(inputRgba);
-
         Quadrilateral quad = getQuadrilateral(contours, inputRgba.size());
-
         Mat doc;
 
         if (quad != null) {
-
             MatOfPoint c = quad.contour;
-
             sd.quadrilateral = quad;
             sd.previewPoints = mPreviewPoints;
             sd.previewSize = mPreviewSize;
-
             doc = fourPointTransform(inputRgba, quad.points);
-
         } else {
             doc = new Mat( inputRgba.size() , CvType.CV_8UC4 );
             inputRgba.copyTo(doc);
@@ -151,18 +140,14 @@ public class ImageProcessor extends Handler {
     }
 
     private boolean detectPreviewDocument(Mat inputRgba) {
-
         ArrayList<MatOfPoint> contours = findContours(inputRgba);
-
         Quadrilateral quad = getQuadrilateral(contours, inputRgba.size());
 
         mPreviewPoints = null;
         mPreviewSize = inputRgba.size();
 
         if (quad != null) {
-
             Point[] rescaledPoints = new Point[4];
-
             double ratio = inputRgba.size().height / 500;
 
             for ( int i=0; i<4 ; i++ ) {
@@ -176,9 +161,7 @@ public class ImageProcessor extends Handler {
             }
 
             mPreviewPoints = rescaledPoints;
-
             drawDocumentBox(mPreviewPoints, mPreviewSize);
-
             Log.d(TAG, quad.points[0].toString() + " , " + quad.points[1].toString() + " , " + quad.points[2].toString() + " , " + quad.points[3].toString());
 
             return true;
@@ -191,13 +174,10 @@ public class ImageProcessor extends Handler {
     }
 
     private void drawDocumentBox(Point[] points, Size stdSize) {
-
         Path path = new Path();
-
         HUDCanvasView hud = mMainActivity.getHUD();
 
         // ATTENTION: axis are swapped
-
         float previewWidth = (float) stdSize.height;
         float previewHeight = (float) stdSize.width;
 
@@ -222,13 +202,12 @@ public class ImageProcessor extends Handler {
     }
 
     private Quadrilateral getQuadrilateral(ArrayList<MatOfPoint> contours , Size srcSize ) {
-
         double ratio = srcSize.height / 500;
         int height = Double.valueOf(srcSize.height / ratio).intValue();
         int width = Double.valueOf(srcSize.width / ratio).intValue();
         Size size = new Size(width,height);
 
-        for ( MatOfPoint c: contours ) {
+        for (MatOfPoint c : contours) {
             MatOfPoint2f c2f = new MatOfPoint2f(c.toArray());
             double peri = Imgproc.arcLength(c2f, true);
             MatOfPoint2f approx = new MatOfPoint2f();
@@ -239,7 +218,6 @@ public class ImageProcessor extends Handler {
             // select biggest 4 angles polygon
             if (points.length == 4) {
                 Point[] foundPoints = sortPoints(points);
-
                 if (insideArea(foundPoints, size)) {
                     return new Quadrilateral( c , foundPoints );
                 }
@@ -250,9 +228,7 @@ public class ImageProcessor extends Handler {
     }
 
     private Point[] sortPoints(Point[] src ) {
-
         ArrayList<Point> srcPoints = new ArrayList<>(Arrays.asList(src));
-
         Point[] result = { null , null , null , null };
 
         Comparator<Point> sumComparator = new Comparator<Point>() {
@@ -263,7 +239,6 @@ public class ImageProcessor extends Handler {
         };
 
         Comparator<Point> diffComparator = new Comparator<Point>() {
-
             @Override
             public int compare(Point lhs, Point rhs) {
                 return Double.valueOf(lhs.y - lhs.x).compareTo(rhs.y - rhs.x);

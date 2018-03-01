@@ -12,6 +12,7 @@ import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
@@ -55,6 +56,7 @@ import com.example.matejsvrznjak.ms_scanner.helpers.DocumentMessage;
 import com.example.matejsvrznjak.ms_scanner.helpers.PreviewFrame;
 import com.example.matejsvrznjak.ms_scanner.helpers.ScannedDocument;
 import com.example.matejsvrznjak.ms_scanner.views.HUDCanvasView;
+import com.googlecode.tesseract.android.TessBaseAPI;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
@@ -162,7 +164,9 @@ public class ScannerActivity extends AppCompatActivity
     private View mWaitSpinner;
     private boolean mBugRotate = false;
     private SharedPreferences mSharedPref;
-    private SimpleDateFormat mDateFormat = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
+
+    private TessBaseAPI mTess;
+    String datapath = "";
 
     public HUDCanvasView getHUD() {
         return mHud;
@@ -255,6 +259,13 @@ public class ScannerActivity extends AppCompatActivity
             i.setComponent(getIntent().getComponent());
             setIntent(i);
         }
+
+        String language = "eng";
+        datapath = getFilesDir()+ "/tesseract/";
+        mTess = new TessBaseAPI();
+        mTess.setVariable("tessedit_char_whitelist", "+-:.,;()@/0123456789abcčćdđéefghijklmnopqrsštuvwxyzžABCČĆDĐEFGHIJKLMNOPQRSŠTUVWXYZŽ");
+        checkFile(new File(datapath + "tessdata/"));
+        mTess.init(datapath, language);
     }
 
     public boolean setFlash(boolean stateFlash) {
@@ -592,7 +603,7 @@ public class ScannerActivity extends AppCompatActivity
             mHud.getLayoutParams().height = previewHeight;
         }
 
-        int hotAreaWidth = displayWidth / 4;
+        int hotAreaWidth = displayWidth / 6;
         int hotAreaHeight = previewHeight / 2 - hotAreaWidth;
 
         ImageView angleNorthWest = (ImageView) findViewById(R.id.nw_angle);
@@ -785,10 +796,12 @@ public class ScannerActivity extends AppCompatActivity
 
     }
 
-     public void openMainWithImage(String imagePath, Boolean processed) {
+     public void openMainWithImage(String ocrResult, String imagePath, Boolean processed) {
          Intent intent = new Intent(this, MainActivity.class);
          intent.putExtra("imagePath", imagePath);
          intent.putExtra("processed", processed);
+         intent.putExtra("ocrResult", ocrResult);
+
          startActivity(intent);
      }
     public void saveDocument(ScannedDocument scannedDocument) {
@@ -804,15 +817,17 @@ public class ScannerActivity extends AppCompatActivity
 
             Core.rotate(imageMat, imageMat, Core.ROTATE_90_CLOCKWISE);
 
-            Bitmap bitmap = Bitmap.createBitmap(imageMat.cols(), imageMat.rows(), Bitmap.Config.ARGB_8888);
+            final Bitmap bitmap = Bitmap.createBitmap(imageMat.cols(), imageMat.rows(), Bitmap.Config.ARGB_8888);
             Utils.matToBitmap(imageMat, bitmap);
-
-            final String imagePath = saveToInternalStorage(bitmap);
+            final String ocrResult = processImage(bitmap);
 
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    openMainWithImage(imagePath, processed);
+                    setImageProcessorBusy(false);
+                    waitSpinnerInvisible();
+                    String imagePath = saveToInternalStorage(bitmap);
+                    openMainWithImage(ocrResult, imagePath, processed);
                 }
             });
         } catch (Exception e) {
@@ -1081,7 +1096,62 @@ private String saveToInternalStorage(Bitmap bitmapImage){
             }
         }
     }
-//
+
+    private void checkFile(File dir) {
+        //directory does not exist, but we can successfully create it
+        if (!dir.exists()&& dir.mkdirs()){
+            copyFiles();
+        }
+        //The directory exists, but there is no data file in it
+        if(dir.exists()) {
+            String datafilepath = datapath+ "/tessdata/eng.traineddata";
+            File datafile = new File(datafilepath);
+            if (!datafile.exists()) {
+                copyFiles();
+            }
+        }
+    }
+
+    public String processImage(Bitmap image) {
+
+        String OCRresult = "";
+        mTess.setImage(image);
+        OCRresult = mTess.getUTF8Text();
+        mTess.end();
+
+        return OCRresult;
+    }
+
+    private void copyFiles() {
+        try {
+            //location we want the file to be at
+            String filepath = datapath + "/tessdata/eng.traineddata";
+
+            //get access to AssetManager
+            AssetManager assetManager = getAssets();
+
+            //open byte streams for reading/writing
+            InputStream instream = assetManager.open("tessdata/eng.traineddata");
+            OutputStream outstream = new FileOutputStream(filepath);
+
+            //copy the file to the location specified by filepath
+            byte[] buffer = new byte[1024];
+            int read;
+            while ((read = instream.read(buffer)) != -1) {
+                outstream.write(buffer, 0, read);
+            }
+            outstream.flush();
+            outstream.close();
+            instream.close();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    //
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         return false;

@@ -44,44 +44,38 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
 
-
-    static {
-        if (!OpenCVLoader.initDebug()) {
-            Log.i("opencv", "opencv initialization failed");
-
-        } else {
-            Log.i("opencv", "opencv initialization successfull");
-        }
-    }
+//    static {
+//        if (!OpenCVLoader.initDebug()) {
+//            Log.i("opencv", "opencv initialization failed");
+//
+//        } else {
+//            Log.i("opencv", "opencv initialization successfull");
+//        }
+//    }
 
     BusinessCardData businessCardData;
     TextView displayText;
 
-    private TessBaseAPI mTess;
-    String datapath = "";
-    private Mat imageMat;
-
-    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
-        @Override
-        public void onManagerConnected(int status) {
-            switch (status) {
-                case LoaderCallbackInterface.SUCCESS:
-                {
-                    imageMat = new Mat();
-                } break;
-                default:
-                {
-                    super.onManagerConnected(status);
-                } break;
-            }
-        }
-    };
+//    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
+//        @Override
+//        public void onManagerConnected(int status) {
+//            switch (status) {
+//                case LoaderCallbackInterface.SUCCESS:
+//                {
+//                    imageMat = new Mat();
+//                } break;
+//                default:
+//                {
+//                    super.onManagerConnected(status);
+//                } break;
+//            }
+//        }
+//    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,36 +84,13 @@ public class MainActivity extends AppCompatActivity {
 
         displayText = (TextView) findViewById(R.id.result_textview);
 
-        String language = "eng";
-        datapath = getFilesDir()+ "/tesseract/";
-        mTess = new TessBaseAPI();
-        mTess.setVariable("tessedit_char_whitelist", "+-:.,;()@/0123456789abcčćdđéefghijklmnopqrsštuvwxyzžABCČĆDĐEFGHIJKLMNOPQRSŠTUVWXYZŽ");
-        checkFile(new File(datapath + "tessdata/"));
-        mTess.init(datapath, language);
-
-
-
         String imagePath = getIntent().getExtras().getString("imagePath");
+        String ocrResult = getIntent().getExtras().getString("ocrResult");
         Boolean processed = getIntent().getExtras().getBoolean("processed");
 
-        if (imagePath != null) {
-            loadImageFromStorage(imagePath, processed);
+        if (imagePath != null && ocrResult != null) {
+            loadImageFromStorage(ocrResult, imagePath, processed);
         }
-//        long addr = getIntent().getLongExtra("processedImage", 0);
-//        Mat tempImg = new Mat(addr);
-//
-//        if (tempImg != null) {
-//            Mat img = tempImg.clone();
-//
-//            Bitmap bmp = Bitmap.createBitmap(img.cols(), img.rows(), Bitmap.Config.ARGB_8888);
-//            Utils.matToBitmap(imageMat, bmp);
-//
-//            ImageView imageView = findViewById(R.id.quick_start_cropped_image);
-//
-//            imageView.setImageBitmap(bmp);
-//            processImage(bmp);
-//
-//        }
 
 //        if (!OpenCVLoader.initDebug()) {
 //            //OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_4_0, this, mLoaderCallback);
@@ -167,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
 //                    Utils.matToBitmap(imageMat, bmp);
 
                     imageView.setImageBitmap(bitmap);
-                    processImage(bitmap);
+//                    processImage(bitmap);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -181,15 +152,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void processImage(Bitmap image) {
+    public void processImage(String ocrResult) {
         businessCardData = new BusinessCardData();
         String resultOutput = "";
 
-        String OCRresult = "";
-        mTess.setImage(image);
-        OCRresult = mTess.getUTF8Text();
-        //displayText.setText(OCRresult);
-//        displayText.setText(OCRresult);
+        String OCRresult = ocrResult;
 
         OCRresult = OCRresult.replace("(0)", "").replace("(O)", "").replace("[0)", "").replace("(0]", "").replace("[0]", "").replace("[O]", "");
         OCRresult = OCRresult.replaceAll("[^+:.,()@/0123456789abcčćdđéefghijklmnopqrsštuvwxyzžABCČĆDĐEFGHIJKLMNOPQRSŠTUVWXYZŽ\\n]+", " ");
@@ -260,12 +227,12 @@ public class MainActivity extends AppCompatActivity {
         resultOutput += "Telephone: " + businessCardData.telephone + "\n";
         resultOutput += "Company: " + businessCardData.company + "\n";
 
-        resultOutput += "Url:\n";
         for (String url : businessCardData.url) {
+            resultOutput += "Url: ";
             resultOutput += url + "\n";
         }
 
-        resultOutput += "Email:\n";
+        resultOutput += "Email: ";
         for (String email : businessCardData.emails) {
             resultOutput += email + "\n";
         }
@@ -300,150 +267,25 @@ public class MainActivity extends AppCompatActivity {
         return  stringList;
     }
 
-    private void checkFile(File dir) {
-        //directory does not exist, but we can successfully create it
-        if (!dir.exists()&& dir.mkdirs()){
-            copyFiles();
-        }
-        //The directory exists, but there is no data file in it
-        if(dir.exists()) {
-            String datafilepath = datapath+ "/tessdata/eng.traineddata";
-            File datafile = new File(datafilepath);
-            if (!datafile.exists()) {
-                copyFiles();
-            }
-        }
-    }
-
-    private void copyFiles() {
-        try {
-            //location we want the file to be at
-            String filepath = datapath + "/tessdata/eng.traineddata";
-
-            //get access to AssetManager
-            AssetManager assetManager = getAssets();
-
-            //open byte streams for reading/writing
-            InputStream instream = assetManager.open("tessdata/eng.traineddata");
-            OutputStream outstream = new FileOutputStream(filepath);
-
-            //copy the file to the location specified by filepath
-            byte[] buffer = new byte[1024];
-            int read;
-            while ((read = instream.read(buffer)) != -1) {
-                outstream.write(buffer, 0, read);
-            }
-            outstream.flush();
-            outstream.close();
-            instream.close();
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void findRectangle(Mat src) throws Exception {
-        Mat blurred = src.clone();
-        Imgproc.medianBlur(src, blurred, 9);
-
-        Mat gray0 = new Mat(blurred.size(), CvType.CV_8U), gray = new Mat();
-
-        List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
-
-        List<Mat> blurredChannel = new ArrayList<Mat>();
-        blurredChannel.add(blurred);
-        List<Mat> gray0Channel = new ArrayList<Mat>();
-        gray0Channel.add(gray0);
-
-        MatOfPoint2f approxCurve;
-
-        double maxArea = 0;
-        int maxId = -1;
-
-        for (int c = 0; c < 3; c++) {
-            int ch[] = { c, 0 };
-            Core.mixChannels(blurredChannel, gray0Channel, new MatOfInt(ch));
-
-            int thresholdLevel = 1;
-            for (int t = 0; t < thresholdLevel; t++) {
-                if (t == 0) {
-                    Imgproc.Canny(gray0, gray, 10, 20, 3, true); // true ?
-                    Imgproc.dilate(gray, gray, new Mat(), new Point(-1, -1), 1); // 1
-                    // ?
-                } else {
-                    Imgproc.adaptiveThreshold(gray0, gray, thresholdLevel,
-                            Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
-                            Imgproc.THRESH_BINARY,
-                            (src.width() + src.height()) / 200, t);
-                }
-
-                Imgproc.findContours(gray, contours, new Mat(),
-                        Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
-
-                for (MatOfPoint contour : contours) {
-                    MatOfPoint2f temp = new MatOfPoint2f(contour.toArray());
-
-                    double area = Imgproc.contourArea(contour);
-                    approxCurve = new MatOfPoint2f();
-                    Imgproc.approxPolyDP(temp, approxCurve,
-                            Imgproc.arcLength(temp, true) * 0.02, true);
-
-                    if (approxCurve.total() == 4 && area >= maxArea) {
-                        double maxCosine = 0;
-
-                        List<Point> curves = approxCurve.toList();
-                        for (int j = 2; j < 5; j++) {
-
-                            double cosine = Math.abs(angle(curves.get(j % 4),
-                                    curves.get(j - 2), curves.get(j - 1)));
-                            maxCosine = Math.max(maxCosine, cosine);
-                        }
-
-                        if (maxCosine < 0.3) {
-                            maxArea = area;
-                            maxId = contours.indexOf(contour);
-                        }
-                    }
-                }
-            }
-        }
-
-        if (maxId >= 0) {
-            Imgproc.drawContours(src, contours, maxId, new Scalar(255, 0, 0,
-                    .8), 8);
-
-        }
-    }
-
-    private double angle(Point p1, Point p2, Point p0) {
-        double dx1 = p1.x - p0.x;
-        double dy1 = p1.y - p0.y;
-        double dx2 = p2.x - p0.x;
-        double dy2 = p2.y - p0.y;
-        return (dx1 * dx2 + dy1 * dy2)
-                / Math.sqrt((dx1 * dx1 + dy1 * dy1) * (dx2 * dx2 + dy2 * dy2)
-                + 1e-10);
-    }
-
-    private void loadImageFromStorage(String path, Boolean processed) {
+    private void loadImageFromStorage(String ocrResult, String path, Boolean processed) {
 
         try {
             File f = new File(path, "scannedImage.jpg");
             Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
 
-            if (!processed) {
-                Uri imgURI = Uri.fromFile(f);
-                if (imgURI != null) {
-                    CropImage.activity(imgURI)
-                            .start(this);
-                }
-            } else {
+//            if (!processed) {
+//                Uri imgURI = Uri.fromFile(f);
+//                if (imgURI != null) {
+//                    CropImage.activity(imgURI).start(this);
+//                }
+//            } else {
                 ImageView img = findViewById(R.id.quick_start_cropped_image);
                 img.setImageBitmap(b);
-                processImage(b);
-            }
+//            }
+
+            processImage(ocrResult);
+
+            f.delete();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
