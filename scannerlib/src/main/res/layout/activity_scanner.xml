@@ -1,0 +1,159 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:opencv="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/doc_scan_background"
+    tools:context=".ScannerActivity">
+
+    <!-- The primary full-screen view. This can be replaced with whatever view
+         is needed to present your content, e.g. VideoView, SurfaceView,
+         TextureView, etc. -->
+
+    <SurfaceView
+        android:id="@+id/surfaceView"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentStart="false"
+        android:layout_alignParentTop="true"
+        android:visibility="gone" />
+
+    <!-- This FrameLayout insets its children based on system windows using
+         android:fitsSystemWindows. -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true">
+
+        <FrameLayout
+            android:id="@+id/fullscreen_content_controls"
+            style="?metaButtonBarStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:background="@color/black_overlay"
+            android:orientation="vertical">
+        </FrameLayout>
+
+    </FrameLayout>
+
+    <RelativeLayout
+        android:id="@+id/wait_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:indeterminate="true" />
+
+    </RelativeLayout>
+
+
+
+    <LinearLayout
+        android:id="@+id/linearLayout2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_marginBottom="@dimen/margin10"
+        android:weightSum="3">
+
+        <TextView
+            android:layout_width="@dimen/zerodp"
+            android:layout_height="match_parent"
+            android:layout_weight="1.5"
+            android:gravity="right|center_vertical"
+            android:paddingRight="@dimen/gap"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textColor="@color/colorSecondaryDark"
+            android:typeface="monospace"/>
+
+        <Button
+            android:id="@+id/scanDocButton"
+            android:layout_width="@dimen/seventydp"
+            android:layout_height="@dimen/seventydp"
+            android:background="@drawable/capture"
+            android:elevation="@dimen/gap"
+            android:shadowColor="@color/shadow"
+            android:translationZ="@dimen/gap"
+            android:enabled="true"
+            android:gravity="center_vertical"/>
+
+        <TextView
+            android:layout_width="@dimen/zerodp"
+            android:layout_height="match_parent"
+            android:layout_weight="1.5"
+            android:gravity="left|center_vertical"
+            android:paddingLeft="@dimen/gap"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textColor="@color/colorSecondaryDark"
+            android:typeface="monospace" />
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="left|center_vertical">
+
+        <!--<ImageView-->
+            <!--android:id="@+id/scannedAnimation"-->
+            <!--android:layout_width="@dimen/zeropx"-->
+            <!--android:layout_height="@dimen/zeropx"-->
+            <!--android:layout_alignParentLeft="true"-->
+            <!--android:layout_alignParentStart="true"-->
+            <!--android:layout_alignParentTop="true"-->
+            <!--android:layout_marginBottom="@dimen/zeropx"-->
+            <!--android:layout_marginLeft="@dimen/zeropx"-->
+            <!--android:background="@color/transparent"-->
+            <!--android:visibility="invisible" />-->
+
+        <com.example.matejsvrznjak.ms_scanner.views.HUDCanvasView
+            android:id="@+id/hud"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:background="@color/transparent"
+            android:paddingBottom="@dimen/zerodp"
+            android:paddingLeft="@dimen/zerodp" />
+
+        <ImageView
+            android:id="@+id/nw_angle"
+            android:layout_width="@dimen/angleside"
+            android:layout_height="@dimen/angleside"
+            android:rotation="90"
+
+            android:src="@drawable/angle" />
+
+        <ImageView
+            android:id="@+id/se_angle"
+            android:layout_width="@dimen/angleside"
+            android:layout_height="@dimen/angleside"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:rotation="270"
+            android:src="@drawable/angle" />
+
+        <ImageView
+            android:id="@+id/sw_angle"
+            android:layout_width="@dimen/angleside"
+            android:layout_height="@dimen/angleside"
+            android:src="@drawable/angle" />
+
+        <ImageView
+            android:id="@+id/ne_angle"
+            android:layout_width="@dimen/angleside"
+            android:layout_height="@dimen/angleside"
+            android:rotation="180"
+            android:src="@drawable/angle" />
+    </RelativeLayout>
+
+
+</FrameLayout>
