@@ -47,10 +47,9 @@ public class MainActivity extends AppCompatActivity {
 
                 String imagePath = data.getStringExtra("imagePath");
                 String ocrResult = data.getStringExtra("ocrResult");
-                Boolean processed = data.getBooleanExtra("processed", false);
 
                 if (imagePath != null && ocrResult != null) {
-                    loadImageFromStorage(ocrResult, imagePath, processed);
+                    loadImageFromStorage(ocrResult, imagePath);
                 }
             }
         }
@@ -171,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
         return  stringList;
     }
 
-    private void loadImageFromStorage(String ocrResult, String path, Boolean processed) {
+    private void loadImageFromStorage(String ocrResult, String path) {
 
         try {
             File f = new File(path, "scannedImage.jpg");
