@@ -12,28 +12,25 @@ import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.content.res.AssetManager;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.hardware.Camera;
 import android.media.AudioManager;
-import android.media.ExifInterface;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
 import android.preference.PreferenceManager;
-import android.provider.MediaStore;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.Display;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -42,11 +39,6 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.view.animation.AccelerateInterpolator;
-import android.view.animation.Animation;
-import android.view.animation.AnimationSet;
-import android.view.animation.ScaleAnimation;
-import android.view.animation.TranslateAnimation;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -56,7 +48,10 @@ import com.example.matejsvrznjak.ms_scanner.helpers.DocumentMessage;
 import com.example.matejsvrznjak.ms_scanner.helpers.PreviewFrame;
 import com.example.matejsvrznjak.ms_scanner.helpers.ScannedDocument;
 import com.example.matejsvrznjak.ms_scanner.views.HUDCanvasView;
-import com.googlecode.tesseract.android.TessBaseAPI;
+import com.google.android.gms.vision.Frame;
+import com.google.android.gms.vision.text.Text;
+import com.google.android.gms.vision.text.TextBlock;
+import com.google.android.gms.vision.text.TextRecognizer;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
@@ -65,24 +60,13 @@ import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.Point;
 import org.opencv.core.Size;
-import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
-
-import static com.example.matejsvrznjak.ms_scanner.helpers.Utils.addImageToGallery;
-import static com.example.matejsvrznjak.ms_scanner.helpers.Utils.decodeSampledBitmapFromUri;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -164,9 +148,6 @@ public class ScannerActivity extends AppCompatActivity
     private View mWaitSpinner;
     private boolean mBugRotate = false;
     private SharedPreferences mSharedPref;
-
-    private TessBaseAPI mTess;
-    String datapath = "";
 
     public HUDCanvasView getHUD() {
         return mHud;
@@ -259,13 +240,6 @@ public class ScannerActivity extends AppCompatActivity
             i.setComponent(getIntent().getComponent());
             setIntent(i);
         }
-
-        String language = "eng";
-        datapath = getFilesDir()+ "/tesseract/";
-        mTess = new TessBaseAPI();
-        mTess.setVariable("tessedit_char_whitelist", "+-:.,;()@/0123456789abcčćdđéefghijklmnopqrsštuvwxyzžABCČĆDĐEFGHIJKLMNOPQRSŠTUVWXYZŽ");
-        checkFile(new File(datapath + "tessdata/"));
-        mTess.init(datapath, language);
     }
 
     public boolean setFlash(boolean stateFlash) {
@@ -464,7 +438,6 @@ public class ScannerActivity extends AppCompatActivity
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-
                 mWaitSpinner.setVisibility(View.GONE);
             }
         });
@@ -714,7 +687,6 @@ public class ScannerActivity extends AppCompatActivity
 
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
-
         android.hardware.Camera.Size pictureSize = camera.getParameters().getPreviewSize();
 
         Log.d(TAG, "onPreviewFrame - received image " + pictureSize.width + "x" + pictureSize.height
@@ -732,7 +704,6 @@ public class ScannerActivity extends AppCompatActivity
 
             sendImageProcessorMessage("previewFrame", new PreviewFrame(mat, autoMode, !(autoMode || scanClicked)));
         }
-
     }
 
     public void invalidateHUD() {
@@ -765,11 +736,9 @@ public class ScannerActivity extends AppCompatActivity
 
     @Override
     public void onPictureTaken(byte[] data, Camera camera) {
-
         shootSound();
 
         android.hardware.Camera.Size pictureSize = camera.getParameters().getPictureSize();
-
         Log.d(TAG, "onPictureTaken - received image " + pictureSize.width + "x" + pictureSize.height);
 
         Mat mat = new Mat(new Size(pictureSize.width, pictureSize.height), CvType.CV_8U);
@@ -793,22 +762,21 @@ public class ScannerActivity extends AppCompatActivity
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
-
     }
 
-     public void openMainWithImage(String ocrResult, String imagePath, Boolean processed) {
-         Intent intent = new Intent(this, MainActivity.class);
-         intent.putExtra("imagePath", imagePath);
-         intent.putExtra("processed", processed);
-         intent.putExtra("ocrResult", ocrResult);
+    public void openMainWithImage(String ocrResult, String imagePath) {
+        Intent intent = new Intent();
+        intent.putExtra("imagePath", imagePath);
+        intent.putExtra("processed", true);
+        intent.putExtra("ocrResult", ocrResult);
+        setResult(RESULT_OK, intent);
+        finish();
+    }
 
-         startActivity(intent);
-     }
     public void saveDocument(ScannedDocument scannedDocument) {
 
         try {
             Mat imageMat;
-            final Boolean processed = scannedDocument.processed != null;
             if (scannedDocument.processed != null) {
                 imageMat = scannedDocument.processed;
             } else {
@@ -819,6 +787,7 @@ public class ScannerActivity extends AppCompatActivity
 
             final Bitmap bitmap = Bitmap.createBitmap(imageMat.cols(), imageMat.rows(), Bitmap.Config.ARGB_8888);
             Utils.matToBitmap(imageMat, bitmap);
+
             final String ocrResult = processImage(bitmap);
 
             runOnUiThread(new Runnable() {
@@ -827,261 +796,38 @@ public class ScannerActivity extends AppCompatActivity
                     setImageProcessorBusy(false);
                     waitSpinnerInvisible();
                     String imagePath = saveToInternalStorage(bitmap);
-                    openMainWithImage(ocrResult, imagePath, processed);
+                    openMainWithImage(ocrResult, imagePath);
                 }
             });
+
         } catch (Exception e) {
             Log.d(TAG, "saveDocument: " + e.getLocalizedMessage());
         }
-
-//
-
-//        Intent intent = getIntent();
-//        String intentText = intent.toString();
-//        Log.d(TAG, "intent text: " + intentText);
-//        if (intent.getAction() != null) {
-//
-//            String fileName;
-//            boolean isIntent = false;
-//            Uri fileUri = null;
-//            if (intent.getAction().equals("android.media.action.IMAGE_CAPTURE")) {
-//                fileUri = ((Uri) intent.getParcelableExtra(MediaStore.EXTRA_OUTPUT));
-//                Log.d(TAG, "intent uri: " + fileUri.toString());
-//                try {
-//                    fileName = File.createTempFile("onsFile", ".jpg", this.getCacheDir()).getPath();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                    return;
-//                }
-//                isIntent = true;
-//            } else {
-//                File folder = new File(Environment.getExternalStorageDirectory().toString()
-//                        + "/MSScanner");
-//                if (!folder.exists()) {
-//                    folder.mkdir();
-//                    Log.d(TAG, "wrote: created folder " + folder.getPath());
-//                }
-//                fileName = Environment.getExternalStorageDirectory().toString()
-//                        + "/MSScanner/DOC-"
-//                        + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date())
-//                        + ".jpg";
-//            }
-//
-//            Mat endDoc = new Mat(Double.valueOf(doc.size().width).intValue(),
-//                    Double.valueOf(doc.size().height).intValue(), CvType.CV_8UC4);
-//
-//            Core.flip(doc.t(), endDoc, 1);
-//
-//            Imgcodecs.imwrite(fileName, endDoc);
-//            endDoc.release();
-
-            //openMainWithImage();
-
-//            try {
-//                ExifInterface exif = new ExifInterface(fileName);
-//                exif.setAttribute("UserComment", "Generated using MSScanner");
-//                String nowFormatted = mDateFormat.format(new Date().getTime());
-//                exif.setAttribute(ExifInterface.TAG_DATETIME, nowFormatted);
-//                exif.setAttribute(ExifInterface.TAG_DATETIME_DIGITIZED, nowFormatted);
-//                exif.setAttribute("Software", "MSScanner " + BuildConfig.VERSION_NAME);
-//                exif.saveAttributes();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-
-//            if (isIntent) {
-//                InputStream inputStream = null;
-//                OutputStream realOutputStream = null;
-//                try {
-//                    inputStream = new FileInputStream(fileName);
-//                    realOutputStream = this.getContentResolver().openOutputStream(fileUri);
-//                    // Transfer bytes from in to out
-//                    byte[] buffer = new byte[1024];
-//                    int len;
-//                    while ((len = inputStream.read(buffer)) > 0) {
-//                        realOutputStream.write(buffer, 0, len);
-//                    }
-//                } catch (FileNotFoundException e) {
-//                    e.printStackTrace();
-//                    return;
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                    return;
-//                } finally {
-//                    try {
-//                        inputStream.close();
-//                        realOutputStream.close();
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }
-
-//            animateDocument(fileName, scannedDocument);
-
-//            Log.d(TAG, "wrote: " + fileName);
-//
-//            if (isIntent) {
-//                new File(fileName).delete();
-//                setResult(RESULT_OK, intent);
-//                finish();
-//            } else {
-////                addImageToGallery(fileName, this);
-//            }
-
-            // Record goal "PictureTaken"
-//            ScannerApplication.getInstance().trackEvent("Event", "Picture Taken", "Document Scanner Activity");
-
-//            refreshCamera();
-//        } else {
-//            intent.setAction("android.media.action.IMAGE_CAPTURE");
-//            saveDocument(scannedDocument);
-//        }
     }
 
-//    class AnimationRunnable implements Runnable {
-//
-//        private Size imageSize;
-//        private Point[] previewPoints = null;
-//        public Size previewSize = null;
-//        public String fileName = null;
-//        public int width;
-//        public int height;
-//        private Bitmap bitmap;
-//
-//        public AnimationRunnable(String filename, ScannedDocument document) {
-//            this.fileName = filename;
-//            this.imageSize = document.processed.size();
-//
-//            if (document.quadrilateral != null) {
-//                this.previewPoints = document.previewPoints;
-//                this.previewSize = document.previewSize;
-//            }
-//        }
-//
-//        public double hipotenuse(Point a, Point b) {
-//            return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
-//        }
-//
-//        @Override
-//        public void run() {
-//            final ImageView imageView = (ImageView) findViewById(R.id.scannedAnimation);
-//
-//            Display display = getWindowManager().getDefaultDisplay();
-//            android.graphics.Point size = new android.graphics.Point();
-//            display.getRealSize(size);
-//
-//            int width = Math.min(size.x, size.y);
-//            int height = Math.max(size.x, size.y);
-//
-//            // ATENTION: captured images are always in landscape, values should be swapped
-//            double imageWidth = imageSize.height;
-//            double imageHeight = imageSize.width;
-//
-//            RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) imageView.getLayoutParams();
-//
-//            if (previewPoints != null) {
-//                double documentLeftHeight = hipotenuse(previewPoints[0], previewPoints[1]);
-//                double documentBottomWidth = hipotenuse(previewPoints[1], previewPoints[2]);
-//                double documentRightHeight = hipotenuse(previewPoints[2], previewPoints[3]);
-//                double documentTopWidth = hipotenuse(previewPoints[3], previewPoints[0]);
-//
-//                double documentWidth = Math.max(documentTopWidth, documentBottomWidth);
-//                double documentHeight = Math.max(documentLeftHeight, documentRightHeight);
-//
-//                Log.d(TAG, "device: " + width + "x" + height + " image: " + imageWidth + "x" + imageHeight + " document: " + documentWidth + "x" + documentHeight);
-//                Log.d(TAG, "previewPoints[0] x=" + previewPoints[0].x + " y=" + previewPoints[0].y);
-//                Log.d(TAG, "previewPoints[1] x=" + previewPoints[1].x + " y=" + previewPoints[1].y);
-//                Log.d(TAG, "previewPoints[2] x=" + previewPoints[2].x + " y=" + previewPoints[2].y);
-//                Log.d(TAG, "previewPoints[3] x=" + previewPoints[3].x + " y=" + previewPoints[3].y);
-//
-//                // ATENTION: again, swap width and height
-//                double xRatio = width / previewSize.height;
-//                double yRatio = height / previewSize.width;
-//
-//                params.topMargin = (int) (previewPoints[3].x * yRatio);
-//                params.leftMargin = (int) ((previewSize.height - previewPoints[3].y) * xRatio);
-//                params.width = (int) (documentWidth * xRatio);
-//                params.height = (int) (documentHeight * yRatio);
-//            } else {
-//                params.topMargin = height / 4;
-//                params.leftMargin = width / 4;
-//                params.width = width / 2;
-//                params.height = height / 2;
-//            }
+    private String saveToInternalStorage(Bitmap bitmapImage){
+        ContextWrapper cw = new ContextWrapper(getApplicationContext());
+        // path to /data/data/yourapp/app_data/imageDir
+        File directory = cw.getDir("scannedImageDir", Context.MODE_PRIVATE);
+        // Create imageDir
+        File mypath = new File(directory,"scannedImage.jpg");
 
-//            bitmap = decodeSampledBitmapFromUri(fileName, params.width, params.height);
-
-//            imageView.setImageBitmap(bitmap);
-//
-//            imageView.setVisibility(View.VISIBLE);
-//
-//            TranslateAnimation translateAnimation = new TranslateAnimation(
-//                    Animation.ABSOLUTE, 0, Animation.ABSOLUTE, -params.leftMargin,
-//                    Animation.ABSOLUTE, 0, Animation.ABSOLUTE, height - params.topMargin
-//            );
-//
-//            ScaleAnimation scaleAnimation = new ScaleAnimation(1, 0, 1, 0);
-//
-//            AnimationSet animationSet = new AnimationSet(true);
-//
-//            animationSet.addAnimation(scaleAnimation);
-//            animationSet.addAnimation(translateAnimation);
-//
-//            animationSet.setDuration(600);
-//            animationSet.setInterpolator(new AccelerateInterpolator());
-//
-//            animationSet.setAnimationListener(new Animation.AnimationListener() {
-//                @Override
-//                public void onAnimationStart(Animation animation) {
-//
-//                }
-//
-//                @Override
-//                public void onAnimationEnd(Animation animation) {
-//                    imageView.setVisibility(View.INVISIBLE);
-//                    imageView.setImageBitmap(null);
-//                    AnimationRunnable.this.bitmap.recycle();
-//                }
-//
-//                @Override
-//                public void onAnimationRepeat(Animation animation) {
-//
-//                }
-//            });
-//
-//            imageView.startAnimation(animationSet);
-//        }
-//    }
-//
-//    private void animateDocument(String filename, ScannedDocument quadrilateral) {
-//        AnimationRunnable runnable = new AnimationRunnable(filename, quadrilateral);
-//        runOnUiThread(runnable);
-//    }
-//
-private String saveToInternalStorage(Bitmap bitmapImage){
-    ContextWrapper cw = new ContextWrapper(getApplicationContext());
-    // path to /data/data/yourapp/app_data/imageDir
-    File directory = cw.getDir("scannedImageDir", Context.MODE_PRIVATE);
-    // Create imageDir
-    File mypath = new File(directory,"scannedImage.jpg");
-
-    FileOutputStream fos = null;
-    try {
-        fos = new FileOutputStream(mypath);
-        // Use the compress method on the BitMap object to write image to the OutputStream
-        bitmapImage.compress(Bitmap.CompressFormat.JPEG, 100, fos);
-    } catch (Exception e) {
-        e.printStackTrace();
-    } finally {
+        FileOutputStream fos = null;
         try {
-            fos.close();
-        } catch (IOException e) {
+            fos = new FileOutputStream(mypath);
+            // Use the compress method on the BitMap object to write image to the OutputStream
+            bitmapImage.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+        } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            try {
+                fos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+        return directory.getAbsolutePath();
     }
-    return directory.getAbsolutePath();
-}
 
     private void shootSound() {
         AudioManager meng = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
@@ -1097,63 +843,188 @@ private String saveToInternalStorage(Bitmap bitmapImage){
         }
     }
 
-    private void checkFile(File dir) {
-        //directory does not exist, but we can successfully create it
-        if (!dir.exists()&& dir.mkdirs()){
-            copyFiles();
+    public String processImage(Bitmap image) {
+        String OCRresult = "";
+
+        Context context = getApplicationContext();
+        TextRecognizer ocrFrame = new TextRecognizer.Builder(context).build();
+        Frame frame = new Frame.Builder().setBitmap(image).build();
+        if (ocrFrame.isOperational()) {
+            Log.e(TAG, "Textrecognizer is operational");
         }
-        //The directory exists, but there is no data file in it
-        if(dir.exists()) {
-            String datafilepath = datapath+ "/tessdata/eng.traineddata";
-            File datafile = new File(datafilepath);
-            if (!datafile.exists()) {
-                copyFiles();
+
+        SparseArray<TextBlock> textBlocks = ocrFrame.detect(frame);
+
+        for (int i = 0; i < textBlocks.size(); i++) {
+            TextBlock textBlock = textBlocks.get(textBlocks.keyAt(i));
+
+            List<? extends Text> textComponents = textBlock.getComponents();
+
+            for (Text t : textComponents) {
+                Log.e("recognizedText ", t.getValue());
+                OCRresult += t.getValue() + "\n";
             }
         }
-    }
-
-    public String processImage(Bitmap image) {
-
-        String OCRresult = "";
-        mTess.setImage(image);
-        OCRresult = mTess.getUTF8Text();
-        mTess.end();
 
         return OCRresult;
     }
 
-    private void copyFiles() {
-        try {
-            //location we want the file to be at
-            String filepath = datapath + "/tessdata/eng.traineddata";
-
-            //get access to AssetManager
-            AssetManager assetManager = getAssets();
-
-            //open byte streams for reading/writing
-            InputStream instream = assetManager.open("tessdata/eng.traineddata");
-            OutputStream outstream = new FileOutputStream(filepath);
-
-            //copy the file to the location specified by filepath
-            byte[] buffer = new byte[1024];
-            int read;
-            while ((read = instream.read(buffer)) != -1) {
-                outstream.write(buffer, 0, read);
-            }
-            outstream.flush();
-            outstream.close();
-            instream.close();
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    //
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         return false;
     }
 }
+//
+//CLOUD VISION CODE
+//
+//    private static final String CLOUD_VISION_API_KEY = "INSERT_API_KEY";
+//    private static final String ANDROID_CERT_HEADER = "X-Android-Cert";
+//    private static final String ANDROID_PACKAGE_HEADER = "X-Android-Package";
+
+//    public void processImage(Bitmap image) {
+
+
+//        if (image != null) {
+//            try {
+//                // scale the image to save on bandwidth
+//
+//                Bitmap bitmap =
+//                        scaleBitmapDown(image,
+//                                1200);
+//
+//                callCloudVision(bitmap);
+//            } catch (IOException e) {
+//                Log.d(TAG, "Image picking failed because " + e.getMessage());
+//                Toast.makeText(this, "Image picking failed because" + e.getMessage(), Toast.LENGTH_LONG).show();
+//            }
+//        } else {
+//            Log.d(TAG, "Image picker gave us a null image.");
+//            Toast.makeText(this, "Image picker gave us a null image.", Toast.LENGTH_LONG).show();
+//        }
+//    }
+
+//    private void callCloudVision(final Bitmap bitmap) throws IOException {
+//        // Switch text to loading
+////        mImageDetails.setText(R.string.loading_message);
+//
+//        // Do the real work in an async task, because we need to use the network anyway
+//        new AsyncTask<Object, Void, String>() {
+//            @Override
+//            protected String doInBackground(Object... params) {
+//                try {
+//                    HttpTransport httpTransport = AndroidHttp.newCompatibleTransport();
+//                    JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
+//
+//                    VisionRequestInitializer requestInitializer =
+//                            new VisionRequestInitializer(CLOUD_VISION_API_KEY) {
+//                                /**
+//                                 * We override this so we can inject important identifying fields into the HTTP
+//                                 * headers. This enables use of a restricted cloud platform API key.
+//                                 */
+//                                @Override
+//                                protected void initializeVisionRequest(VisionRequest<?> visionRequest)
+//                                        throws IOException {
+//                                    super.initializeVisionRequest(visionRequest);
+//
+//                                    String packageName = getPackageName();
+//                                    visionRequest.getRequestHeaders().set(ANDROID_PACKAGE_HEADER, packageName);
+//
+//                                    String sig = PackageManagerUtils.getSignature(getPackageManager(), packageName);
+//
+//                                    visionRequest.getRequestHeaders().set(ANDROID_CERT_HEADER, sig);
+//                                }
+//                            };
+//
+//                    Vision.Builder builder = new Vision.Builder(httpTransport, jsonFactory, null);
+//                    builder.setVisionRequestInitializer(requestInitializer);
+//
+//                    builder.setApplicationName("MS_SCANNER");
+//                    Vision vision = builder.build();
+//
+//                    BatchAnnotateImagesRequest batchAnnotateImagesRequest =
+//                            new BatchAnnotateImagesRequest();
+//                    batchAnnotateImagesRequest.setRequests(new ArrayList<AnnotateImageRequest>() {{
+//                        AnnotateImageRequest annotateImageRequest = new AnnotateImageRequest();
+//
+//                        // Add the image
+//                        Image base64EncodedImage = new Image();
+//                        // Convert the bitmap to a JPEG
+//                        // Just in case it's a format that Android understands but Cloud Vision
+//                        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+//                        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, byteArrayOutputStream);
+//                        byte[] imageBytes = byteArrayOutputStream.toByteArray();
+//
+//                        // Base64 encode the JPEG
+//                        base64EncodedImage.encodeContent(imageBytes);
+//                        annotateImageRequest.setImage(base64EncodedImage);
+//
+//                        // add the features we want
+//                        annotateImageRequest.setFeatures(new ArrayList<Feature>() {{
+//                            Feature textDetection = new Feature();
+//                            textDetection.setType("TEXT_DETECTION");
+//                            add(textDetection);
+//                        }});
+//
+//                        // Add the list of one thing to the request
+//                        add(annotateImageRequest);
+//                    }});
+//
+//                    Vision.Images.Annotate annotateRequest =
+//                            vision.images().annotate(batchAnnotateImagesRequest);
+//                    // Due to a bug: requests to Vision API containing large images fail when GZipped.
+//                    annotateRequest.setDisableGZipContent(true);
+//                    Log.d(TAG, "created Cloud Vision request object, sending request");
+//
+//                    BatchAnnotateImagesResponse response = annotateRequest.execute();
+//                    return convertResponseToString(response);
+//
+//                } catch (GoogleJsonResponseException e) {
+//                    Log.d(TAG, "failed to make API request because " + e.getContent());
+//                } catch (IOException e) {
+//                    Log.d(TAG, "failed to make API request because of other IOException " +
+//                            e.getMessage());
+//                }
+//                return "Cloud Vision API request failed. Check logs for details.";
+//            }
+//
+//            protected void onPostExecute(String result) {
+//                setImageProcessorBusy(false);
+//                waitSpinnerInvisible();
+//                String imagePath = saveToInternalStorage(bitmap);
+//                openMainWithImage(result, imagePath);
+//            }
+//        }.execute();
+//    }
+
+//    public Bitmap scaleBitmapDown(Bitmap bitmap, int maxDimension) {
+//
+//        int originalWidth = bitmap.getWidth();
+//        int originalHeight = bitmap.getHeight();
+//        int resizedWidth = maxDimension;
+//        int resizedHeight = maxDimension;
+//
+//        if (originalHeight > originalWidth) {
+//            resizedHeight = maxDimension;
+//            resizedWidth = (int) (resizedHeight * (float) originalWidth / (float) originalHeight);
+//        } else if (originalWidth > originalHeight) {
+//            resizedWidth = maxDimension;
+//            resizedHeight = (int) (resizedWidth * (float) originalHeight / (float) originalWidth);
+//        } else if (originalHeight == originalWidth) {
+//            resizedHeight = maxDimension;
+//            resizedWidth = maxDimension;
+//        }
+//        return Bitmap.createScaledBitmap(bitmap, resizedWidth, resizedHeight, false);
+//    }
+//
+//    private String convertResponseToString(BatchAnnotateImagesResponse response) {
+//        String message;// = "I found these things:\n\n";
+//
+//        EntityAnnotation annotation = response.getResponses().get(0).getTextAnnotations().get(0);
+//        if (annotation != null) {
+//            message = annotation.getDescription();
+//        } else {
+//            message = "nothing";
+//        }
+//
+//        return message;
+//    }

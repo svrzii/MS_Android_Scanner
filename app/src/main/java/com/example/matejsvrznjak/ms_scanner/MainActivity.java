@@ -1,81 +1,30 @@
 package com.example.matejsvrznjak.ms_scanner;
 
 import android.content.Intent;
-import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
-import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.i18n.phonenumbers.PhoneNumberMatch;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
-import com.googlecode.tesseract.android.TessBaseAPI;
-import com.theartofdev.edmodo.cropper.CropImage;
-import com.theartofdev.edmodo.cropper.CropImageView;
-
-import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.LoaderCallbackInterface;
-import org.opencv.android.OpenCVLoader;
-import org.opencv.android.Utils;
-import org.opencv.core.Core;
-import org.opencv.core.CvType;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfInt;
-import org.opencv.core.MatOfPoint;
-import org.opencv.core.MatOfPoint2f;
-import org.opencv.core.Point;
-import org.opencv.core.Scalar;
-import org.opencv.core.Size;
-import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
-
-//    static {
-//        if (!OpenCVLoader.initDebug()) {
-//            Log.i("opencv", "opencv initialization failed");
-//
-//        } else {
-//            Log.i("opencv", "opencv initialization successfull");
-//        }
-//    }
+    private static final int SECOND_ACTIVITY_REQUEST_CODE = 0;
 
     BusinessCardData businessCardData;
     TextView displayText;
-
-//    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
-//        @Override
-//        public void onManagerConnected(int status) {
-//            switch (status) {
-//                case LoaderCallbackInterface.SUCCESS:
-//                {
-//                    imageMat = new Mat();
-//                } break;
-//                default:
-//                {
-//                    super.onManagerConnected(status);
-//                } break;
-//            }
-//        }
-//    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,71 +32,26 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         displayText = (TextView) findViewById(R.id.result_textview);
-
-        String imagePath = getIntent().getExtras().getString("imagePath");
-        String ocrResult = getIntent().getExtras().getString("ocrResult");
-        Boolean processed = getIntent().getExtras().getBoolean("processed");
-
-        if (imagePath != null && ocrResult != null) {
-            loadImageFromStorage(ocrResult, imagePath, processed);
-        }
-
-//        if (!OpenCVLoader.initDebug()) {
-//            //OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_4_0, this, mLoaderCallback);
-//        } else {
-//            //mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
-//        }
     }
 
-    public void onResume()
-    {
-        super.onResume();
-//        if (!OpenCVLoader.initDebug()) {
-//            //OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_4_0, this, mLoaderCallback);
-//        } else {
-//            //mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
-//        }
-    }
-
-    /** Start pick image activity with chooser. */
     public void onSelectImageClick(View view) {
-
-//        Rect box = new Rect(5, 10, 20, 20);
-//        Rect box= new Rect(5,10,20,30);
-//        android.graphics.Rect box = new android.graphics.Rect(50, 100, 150, 200);
+        Intent intent = new Intent(this, ScannerActivity.class);
+        startActivityForResult(intent, SECOND_ACTIVITY_REQUEST_CODE);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        // handle result of CropImageActivity
-        if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
-            CropImage.ActivityResult result = CropImage.getActivityResult(data);
+        // check that it is the SecondActivity with an OK result
+        if (requestCode == SECOND_ACTIVITY_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
 
-                ImageView imageView = findViewById(R.id.quick_start_cropped_image);
-                try {
-//                    imageMat = new Mat();
-                    Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), result.getUri());
-//                    Bitmap bmp32 = bitmap.copy(Bitmap.Config.ARGB_8888, true);
-//                    Utils.bitmapToMat(bmp32, imageMat);
-//                    Imgproc.cvtColor(imageMat, imageMat, Imgproc.COLOR_BGR2GRAY);
-//                    Imgproc.blur(imageMat, imageMat, new Size(3.0, 3.0));
-//                    Imgproc.threshold(imageMat, imageMat, 0, 255, Imgproc.THRESH_OTSU);
-//
-//                    Bitmap bmp = Bitmap.createBitmap(imageMat.cols(), imageMat.rows(), Bitmap.Config.ARGB_8888);
-//                    Utils.matToBitmap(imageMat, bmp);
+                String imagePath = data.getStringExtra("imagePath");
+                String ocrResult = data.getStringExtra("ocrResult");
+                Boolean processed = data.getBooleanExtra("processed", false);
 
-                    imageView.setImageBitmap(bitmap);
-//                    processImage(bitmap);
-                } catch (IOException e) {
-                    e.printStackTrace();
+                if (imagePath != null && ocrResult != null) {
+                    loadImageFromStorage(ocrResult, imagePath, processed);
                 }
-
-                Toast.makeText(
-                        this, "Cropping successful, Sample: " + result.getSampleSize(), Toast.LENGTH_LONG)
-                        .show();
-            } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
-                Toast.makeText(this, "Cropping failed: " + result.getError(), Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -242,10 +146,10 @@ public class MainActivity extends AppCompatActivity {
             resultOutput += address + " ";
         }
 
-        resultOutput += "\n\nOther:\n";
-        for (String other : businessCardData.other) {
-            resultOutput += other + "\n";
-        }
+//        resultOutput += "\n\nOther:\n";
+//        for (String other : businessCardData.other) {
+//            resultOutput += other + "\n";
+//        }
 
         displayText.setText(resultOutput);
     }
@@ -273,22 +177,13 @@ public class MainActivity extends AppCompatActivity {
             File f = new File(path, "scannedImage.jpg");
             Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
 
-//            if (!processed) {
-//                Uri imgURI = Uri.fromFile(f);
-//                if (imgURI != null) {
-//                    CropImage.activity(imgURI).start(this);
-//                }
-//            } else {
-                ImageView img = findViewById(R.id.quick_start_cropped_image);
-                img.setImageBitmap(b);
-//            }
+            ImageView img = findViewById(R.id.quick_start_cropped_image);
+            img.setImageBitmap(b);
 
             processImage(ocrResult);
-
             f.delete();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-
     }
 }

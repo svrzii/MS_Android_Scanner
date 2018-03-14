@@ -16,13 +16,13 @@ tools:context="com.example.matejsvrznjak.ms_scanner.MainActivity">
     android:textColor="@color/white"
     android:textSize="17sp"/>
 
-<!--<Button-->
-    <!--android:layout_width="wrap_content"-->
-    <!--android:layout_height="wrap_content"-->
-    <!--android:layout_gravity="center"-->
-    <!--android:layout_margin="12dp"-->
-    <!--android:onClick="onSelectImageClick"-->
-    <!--android:text="Select"/>-->
+<Button
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:layout_margin="12dp"
+    android:onClick="onSelectImageClick"
+    android:text="Select"/>
 
 <ImageView
     android:id="@+id/quick_start_cropped_image"
