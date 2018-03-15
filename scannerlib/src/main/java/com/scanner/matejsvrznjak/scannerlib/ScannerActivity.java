@@ -692,18 +692,18 @@ public class ScannerActivity extends AppCompatActivity
         Log.d(TAG, "onPreviewFrame - received image " + pictureSize.width + "x" + pictureSize.height
                 + " focused: " + mFocused + " imageprocessor: " + (imageProcessorBusy ? "busy" : "available"));
 
-        if (mFocused && !imageProcessorBusy) {
-            setImageProcessorBusy(true);
-            Mat yuv = new Mat(new Size(pictureSize.width, pictureSize.height * 1.5), CvType.CV_8UC1);
-            yuv.put(0, 0, data);
-
-            Mat mat = new Mat(new Size(pictureSize.width, pictureSize.height), CvType.CV_8UC4);
-            Imgproc.cvtColor(yuv, mat, Imgproc.COLOR_YUV2RGBA_NV21, 4);
-
-            yuv.release();
-
-            sendImageProcessorMessage("previewFrame", new PreviewFrame(mat, autoMode, !(autoMode || scanClicked)));
-        }
+//        if (mFocused && !imageProcessorBusy) {
+//            setImageProcessorBusy(true);
+//            Mat yuv = new Mat(new Size(pictureSize.width, pictureSize.height * 1.5), CvType.CV_8UC1);
+//            yuv.put(0, 0, data);
+//
+//            Mat mat = new Mat(new Size(pictureSize.width, pictureSize.height), CvType.CV_8UC4);
+//            Imgproc.cvtColor(yuv, mat, Imgproc.COLOR_YUV2RGBA_NV21, 4);
+//
+//            yuv.release();
+//
+//            sendImageProcessorMessage("previewFrame", new PreviewFrame(mat, autoMode, !(autoMode || scanClicked)));
+//        }
     }
 
     public void invalidateHUD() {

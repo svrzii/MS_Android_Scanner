@@ -38,8 +38,9 @@
             </intent-filter>
         </activity>
 
+
         <activity
-            android:name=".ScannerActivity"
+            android:name="com.scanner.matejsvrznjak.scannerlib.ScannerActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:screenOrientation="portrait"
             android:theme="@style/FullscreenTheme.NoActionBar">
@@ -49,9 +50,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-
-        <activity android:name="com.theartofdev.edmodo.cropper.CropImageActivity"
-            android:theme="@style/Base.Theme.AppCompat"/>
     </application>
 
 </manifest>

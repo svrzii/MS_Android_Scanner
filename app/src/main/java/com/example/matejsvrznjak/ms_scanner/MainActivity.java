@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import com.google.i18n.phonenumbers.PhoneNumberMatch;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.scanner.matejsvrznjak.scannerlib.ScannerActivity;
 
 import java.io.File;
 import java.io.FileInputStream;
