@@ -576,7 +576,7 @@ public class ScannerActivity extends AppCompatActivity
             mHud.getLayoutParams().height = previewHeight;
         }
 
-        int hotAreaWidth = displayWidth / 4;
+        int hotAreaWidth = displayWidth / 6;
         int hotAreaHeight = previewHeight / 2 - hotAreaWidth;
 
         ImageView angleNorthWest = (ImageView) findViewById(R.id.nw_angle);
