@@ -4,7 +4,7 @@ android {
     compileSdkVersion 27
     defaultConfig {
         applicationId "com.example.matejsvrznjak.ms_scanner"
-        minSdkVersion 21
+        minSdkVersion 15
         targetSdkVersion 27
         versionCode 1
         versionName "1.0"
@@ -20,16 +20,14 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation project(':libs:opencv')
     compile 'com.googlecode.libphonenumber:libphonenumber:4.3'
-    compile 'com.rmtheis:tess-two:8.0.0'
     compile 'com.theartofdev.edmodo:android-image-cropper:2.6.+'
     compile 'com.android.support:design:27.1.0'
     compile 'com.android.support:appcompat-v7:27.0.2'
     compile 'com.android.support:support-v4:27.0.2'
     compile 'com.google.android.gms:play-services-vision:11.8.0'
 
-    //CLOUD VISION CODE
+    //CLOUD VISION
 //    compile 'com.google.api-client:google-api-client-android:1.20.0' exclude module: 'httpclient'
 //    compile 'com.google.http-client:google-http-client-gson:1.20.0' exclude module: 'httpclient'
 //    compile 'com.google.apis:google-api-services-vision:v1-rev2-1.21.0'

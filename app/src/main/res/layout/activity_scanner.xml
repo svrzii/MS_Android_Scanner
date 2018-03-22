@@ -23,25 +23,6 @@
         android:layout_alignParentTop="true"
         android:visibility="gone" />
 
-    <!-- This FrameLayout insets its children based on system windows using
-         android:fitsSystemWindows. -->
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fitsSystemWindows="true">
-
-        <FrameLayout
-            android:id="@+id/fullscreen_content_controls"
-            style="?metaButtonBarStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center_horizontal"
-            android:background="@color/black_overlay"
-            android:orientation="vertical">
-        </FrameLayout>
-
-    </FrameLayout>
-
     <RelativeLayout
         android:id="@+id/wait_spinner"
         android:layout_width="match_parent"
@@ -55,8 +36,6 @@
             android:indeterminate="true" />
 
     </RelativeLayout>
-
-
 
     <LinearLayout
         android:id="@+id/linearLayout2"
@@ -80,7 +59,7 @@
             android:id="@+id/scanDocButton"
             android:layout_width="@dimen/seventydp"
             android:layout_height="@dimen/seventydp"
-            android:background="@drawable/capture"
+            android:background="@drawable/ic_take_photo"
             android:elevation="@dimen/gap"
             android:shadowColor="@color/shadow"
             android:translationZ="@dimen/gap"
@@ -136,10 +115,10 @@
             android:id="@+id/se_angle"
             android:layout_width="@dimen/angleside"
             android:layout_height="@dimen/angleside"
-            android:layout_alignParentStart="true"
             android:layout_alignParentTop="true"
             android:rotation="270"
             android:src="@drawable/angle" />
+        <!--android:layout_alignParentStart="true"-->
 
         <ImageView
             android:id="@+id/sw_angle"

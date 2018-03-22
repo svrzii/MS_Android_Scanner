@@ -1,7 +1,4 @@
 //
-//CLOUD VISION CODE
-//
-
 //package com.example.matejsvrznjak.ms_scanner.helpers;
 //
 //import android.content.pm.PackageInfo;
